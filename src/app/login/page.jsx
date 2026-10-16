@@ -44,8 +44,9 @@ function LoginForm() {
       } else {
         setError(
           err.response?.data?.message ||
-          err.message ||
-          'Invalid credentials. Please verify your phone and password.'
+          (err.response?.status === 404
+            ? 'Endpoint not ready or route compiling. Please try again in a moment.'
+            : err.message || 'Invalid credentials. Please verify your phone and password.')
         );
       }
     } finally {
@@ -97,6 +98,17 @@ function LoginForm() {
                     className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-md shadow-violet-900/30 transition-all hover:scale-[1.02]"
                   >
                     <span>Create Account Now</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              )}
+              {error.toLowerCase().includes('password') && (
+                <div className="pt-2 border-t border-rose-500/20 flex justify-end">
+                  <Link
+                    href={`/forgot-password?phone=${encodeURIComponent(phone || '')}`}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-violet-600 hover:bg-violet-500 text-white font-semibold text-xs shadow-md shadow-violet-900/30 transition-all hover:scale-[1.02]"
+                  >
+                    <span>Reset Password via OTP</span>
                     <ArrowRight className="w-3.5 h-3.5" />
                   </Link>
                 </div>
