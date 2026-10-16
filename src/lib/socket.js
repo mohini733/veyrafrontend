@@ -4,12 +4,21 @@ const getSocketUrl = () => {
   const defaultUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
   if (typeof window !== 'undefined') {
     try {
+      const isLocal =
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1' ||
+        /^192\.168\./.test(window.location.hostname) ||
+        /^10\./.test(window.location.hostname);
+
+      // In production (Vercel): use the deployed backend URL directly
+      if (!isLocal && process.env.NEXT_PUBLIC_SOCKET_URL) {
+        return process.env.NEXT_PUBLIC_SOCKET_URL.replace(/\/$/, '');
+      }
+
       const url = new URL(defaultUrl);
-      if (window.location.hostname && window.location.hostname !== 'localhost') {
-        if (url.hostname === 'localhost') {
-          url.hostname = window.location.hostname;
-          return url.toString().replace(/\/$/, '');
-        }
+      if (isLocal && url.hostname === 'localhost') {
+        url.hostname = window.location.hostname;
+        return url.toString().replace(/\/$/, '');
       }
     } catch (e) {}
   }
