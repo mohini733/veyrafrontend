@@ -1,19 +1,18 @@
 import axios from 'axios';
 
 const getBaseUrl = () => {
-  const defaultUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
   if (typeof window !== 'undefined') {
-    try {
-      const url = new URL(defaultUrl);
-      if (window.location.hostname && window.location.hostname !== 'localhost') {
-        if (url.hostname === 'localhost') {
-          url.hostname = window.location.hostname;
-          return url.toString().replace(/\/$/, '');
-        }
-      }
-    } catch (e) {}
+    // Check if running inside mobile capacitor wrapper
+    const isCapacitor =
+      window.location.protocol === 'capacitor:' ||
+      (typeof window.Capacitor !== 'undefined' && window.Capacitor?.isNativePlatform?.());
+    if (isCapacitor) {
+      return process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
+    }
+    // In web browser: use same-origin /api (proxied seamlessly by Next.js to backend port 5000)
+    return '/api';
   }
-  return defaultUrl;
+  return process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:5000/api';
 };
 
 export const api = axios.create({
