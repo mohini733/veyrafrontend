@@ -1,0 +1,6 @@
+{
+  "appId": "com.veyra.chat",
+  "appName": "Veyra Chat",
+  "webDir": "out",
+  "bundledWebRuntime": false
+}
