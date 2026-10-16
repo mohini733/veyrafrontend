@@ -1,7 +1,11 @@
 import { io } from 'socket.io-client';
 
 const getSocketUrl = () => {
-  const defaultUrl = process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:5000';
+  const defaultUrl =
+    process.env.NEXT_PUBLIC_SOCKET_URL ||
+    process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') ||
+    'http://localhost:5000';
+
   if (typeof window !== 'undefined') {
     try {
       const isLocal =
@@ -10,12 +14,17 @@ const getSocketUrl = () => {
         /^192\.168\./.test(window.location.hostname) ||
         /^10\./.test(window.location.hostname);
 
+      const targetUrl =
+        process.env.NEXT_PUBLIC_SOCKET_URL ||
+        process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, '') ||
+        defaultUrl;
+
       // In production (Vercel): use the deployed backend URL directly
-      if (!isLocal && process.env.NEXT_PUBLIC_SOCKET_URL) {
-        return process.env.NEXT_PUBLIC_SOCKET_URL.replace(/\/$/, '');
+      if (!isLocal && targetUrl && !targetUrl.includes('localhost')) {
+        return targetUrl.replace(/\/$/, '');
       }
 
-      const url = new URL(defaultUrl);
+      const url = new URL(targetUrl);
       if (isLocal && url.hostname === 'localhost') {
         url.hostname = window.location.hostname;
         return url.toString().replace(/\/$/, '');
