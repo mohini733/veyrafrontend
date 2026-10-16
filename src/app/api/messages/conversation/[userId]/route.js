@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '../../../../../../server/db';
-import { Conversation } from '../../../../../../server/models/Conversation';
-import { Message } from '../../../../../../server/models/Message';
-import { getAuthUserId } from '../../../../../../server/auth';
+import { connectDB } from '../../../../../server/db';
+import { Conversation } from '../../../../../server/models/Conversation';
+import { Message } from '../../../../../server/models/Message';
+import { getAuthUserId } from '../../../../../server/auth';
 
 export async function GET(request, { params }) {
   try {
