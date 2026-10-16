@@ -7,10 +7,14 @@ if (!cached) {
 }
 
 export async function connectDB() {
-  const uri =
+  let uri =
     process.env.MONGODB_URI ||
     process.env.MONGO_URI ||
     'mongodb://127.0.0.1:27017/veyra_chat';
+
+  if (uri.startsWith('mongodb+srv://') && !uri.includes('authSource=')) {
+    uri += uri.includes('?') ? '&authSource=admin' : '?authSource=admin';
+  }
 
   if (cached.conn) {
     return cached.conn;
