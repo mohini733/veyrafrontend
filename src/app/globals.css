@@ -89,3 +89,147 @@ body {
 .violet-glow-sm {
   box-shadow: 0 0 12px rgba(139, 92, 246, 0.2);
 }
+
+/* ==========================================================================
+   Veyra Custom App Themes & Dynamic Color System
+   ========================================================================== */
+:root,
+[data-theme="midnight"] {
+  --theme-bg: #090d16;
+  --theme-card: #0c1220;
+  --theme-subcard: #080c14;
+  --theme-sidebar: #0b0f19;
+  --theme-border: #1e293b;
+  --theme-accent: #8b5cf6;
+  --theme-accent-hover: #7c3aed;
+  --theme-accent-light: #a78bfa;
+  --theme-accent-subtle: rgba(139, 92, 246, 0.16);
+  --theme-gradient: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
+  --theme-glow: 0 0 25px rgba(124, 58, 237, 0.35);
+}
+
+[data-theme="cyber"] {
+  --theme-bg: #0e0618;
+  --theme-card: #170d26;
+  --theme-subcard: #120920;
+  --theme-sidebar: #130a21;
+  --theme-border: #3b1959;
+  --theme-accent: #d946ef;
+  --theme-accent-hover: #c026d3;
+  --theme-accent-light: #f0abfc;
+  --theme-accent-subtle: rgba(217, 70, 239, 0.18);
+  --theme-gradient: linear-gradient(135deg, #d946ef 0%, #9333ea 100%);
+  --theme-glow: 0 0 25px rgba(217, 70, 239, 0.35);
+}
+
+[data-theme="obsidian"] {
+  --theme-bg: #000000;
+  --theme-card: #0c0c0e;
+  --theme-subcard: #050506;
+  --theme-sidebar: #08080a;
+  --theme-border: #27272a;
+  --theme-accent: #71717a;
+  --theme-accent-hover: #a1a1aa;
+  --theme-accent-light: #e4e4e7;
+  --theme-accent-subtle: rgba(255, 255, 255, 0.1);
+  --theme-gradient: linear-gradient(135deg, #3f3f46 0%, #18181b 100%);
+  --theme-glow: 0 0 25px rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="ocean"] {
+  --theme-bg: #040e17;
+  --theme-card: #081a29;
+  --theme-subcard: #05131f;
+  --theme-sidebar: #061421;
+  --theme-border: #133957;
+  --theme-accent: #06b6d4;
+  --theme-accent-hover: #0891b2;
+  --theme-accent-light: #67e8f9;
+  --theme-accent-subtle: rgba(6, 182, 212, 0.18);
+  --theme-gradient: linear-gradient(135deg, #06b6d4 0%, #2563eb 100%);
+  --theme-glow: 0 0 25px rgba(6, 182, 212, 0.35);
+}
+
+[data-theme="emerald"] {
+  --theme-bg: #03120a;
+  --theme-card: #072213;
+  --theme-subcard: #04170d;
+  --theme-sidebar: #04190e;
+  --theme-border: #124527;
+  --theme-accent: #10b981;
+  --theme-accent-hover: #059669;
+  --theme-accent-light: #6ee7b7;
+  --theme-accent-subtle: rgba(16, 185, 129, 0.18);
+  --theme-gradient: linear-gradient(135deg, #10b981 0%, #0d9488 100%);
+  --theme-glow: 0 0 25px rgba(16, 185, 129, 0.35);
+}
+
+[data-theme="sunset"] {
+  --theme-bg: #14070e;
+  --theme-card: #220c18;
+  --theme-subcard: #180811;
+  --theme-sidebar: #190913;
+  --theme-border: #4c1837;
+  --theme-accent: #f43f5e;
+  --theme-accent-hover: #e11d48;
+  --theme-accent-light: #fda4af;
+  --theme-accent-subtle: rgba(244, 63, 94, 0.2);
+  --theme-gradient: linear-gradient(135deg, #f43f5e 0%, #ea580c 100%);
+  --theme-glow: 0 0 25px rgba(244, 63, 94, 0.35);
+}
+
+/* Dynamic Theme Overrides across pages and components */
+[data-theme] body,
+[data-theme] .bg-\[\#090d16\] {
+  background-color: var(--theme-bg) !important;
+}
+
+[data-theme] .bg-\[\#0c1220\],
+[data-theme] .bg-\[\#0c1220\]\/90,
+[data-theme] .bg-\[\#111827\],
+[data-theme] .bg-\[\#111827\]\/80 {
+  background-color: var(--theme-card) !important;
+}
+
+[data-theme] .bg-\[\#0b0f19\] {
+  background-color: var(--theme-sidebar) !important;
+}
+
+[data-theme] .border-slate-800,
+[data-theme] .border-slate-800\/80,
+[data-theme] .border-slate-700,
+[data-theme] .border-slate-700\/80 {
+  border-color: var(--theme-border) !important;
+}
+
+[data-theme] .text-violet-400,
+[data-theme] .text-violet-300 {
+  color: var(--theme-accent-light) !important;
+}
+
+[data-theme] .bg-violet-600 {
+  background-color: var(--theme-accent) !important;
+}
+
+[data-theme] .bg-violet-600\/20,
+[data-theme] .bg-violet-600\/15,
+[data-theme] .bg-violet-600\/10 {
+  background-color: var(--theme-accent-subtle) !important;
+}
+
+[data-theme] .border-violet-500,
+[data-theme] .border-violet-500\/30,
+[data-theme] .border-violet-500\/40 {
+  border-color: var(--theme-accent) !important;
+}
+
+[data-theme] .from-violet-600.to-indigo-600,
+[data-theme] .from-violet-600.to-indigo-500 {
+  background-image: var(--theme-gradient) !important;
+}
+
+[data-theme] ::selection {
+  background-color: var(--theme-accent) !important;
+  color: #ffffff !important;
+}
+

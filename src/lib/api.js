@@ -1,10 +1,23 @@
 import axios from 'axios';
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const getBaseUrl = () => {
+  const defaultUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+  if (typeof window !== 'undefined') {
+    try {
+      const url = new URL(defaultUrl);
+      if (window.location.hostname && window.location.hostname !== 'localhost') {
+        if (url.hostname === 'localhost') {
+          url.hostname = window.location.hostname;
+          return url.toString().replace(/\/$/, '');
+        }
+      }
+    } catch (e) {}
+  }
+  return defaultUrl;
+};
 
 export const api = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: getBaseUrl(),
   headers: {
     'Content-Type': 'application/json',
   },

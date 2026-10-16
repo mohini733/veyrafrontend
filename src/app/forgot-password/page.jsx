@@ -56,7 +56,12 @@ function ForgotPasswordForm() {
 
       if (data.success) {
         setStep(2);
-        setOtp('');
+        if (data.devOtp) {
+          setDevCode(data.devOtp);
+          setOtp(data.devOtp);
+        } else {
+          setOtp('');
+        }
         setSuccessMsg(data.message || `Verification code sent via SMS to ${phone}. Please check your phone messages.`);
       }
     } catch (err) {
@@ -233,6 +238,16 @@ function ForgotPasswordForm() {
                     className="w-full pl-10 pr-4 py-3 rounded-xl bg-[#090d16] border border-slate-700/80 text-white placeholder-slate-500 font-mono text-base tracking-widest focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all"
                   />
                 </div>
+                {devCode && (
+                  <div className="mt-2.5 p-2.5 rounded-xl bg-violet-600/15 border border-violet-500/30 text-violet-300 text-xs flex items-center justify-between">
+                    <span>
+                      Code: <strong className="font-mono text-white text-sm tracking-wider">{devCode}</strong>
+                    </span>
+                    <span className="text-[10px] text-slate-400 bg-slate-800/80 px-2 py-0.5 rounded">
+                      Auto-filled
+                    </span>
+                  </div>
+                )}
               </div>
 
               <div>

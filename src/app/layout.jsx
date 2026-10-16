@@ -1,5 +1,6 @@
 import './globals.css';
 import { AuthProvider } from '../context/AuthContext';
+import { CustomizationProvider } from '../context/CustomizationContext';
 
 export const metadata = {
   title: 'Veyra Chat — Real-Time Messaging & Direct Communication',
@@ -19,7 +20,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en" className="dark">
       <body className="min-h-screen bg-[#090d16] text-slate-100 antialiased selection:bg-violet-600 selection:text-white flex flex-col">
-        <AuthProvider>{children}</AuthProvider>
+        <CustomizationProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </CustomizationProvider>
       </body>
     </html>
   );

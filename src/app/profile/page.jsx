@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   User,
@@ -14,6 +14,9 @@ import {
   Sparkles,
   ArrowLeft,
   KeyRound,
+  Camera,
+  Upload,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import api from '../../lib/api';
@@ -23,6 +26,7 @@ import LoadingState from '../../components/LoadingState';
 export default function ProfilePage() {
   const { user, isAuthenticated, loading: authLoading, updateUser, refreshUser } = useAuth();
   const router = useRouter();
+  const fileInputRef = useRef(null);
 
   // Edit State
   const [isEditing, setIsEditing] = useState(false);
@@ -30,8 +34,91 @@ export default function ProfilePage() {
   const [about, setAbout] = useState(user?.about || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
   const [saving, setSaving] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  // Handle uploading custom photo from gallery
+  const handleImageFileChange = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (JPEG, PNG, WebP).');
+      return;
+    }
+
+    setUploadingImage(true);
+    setError('');
+    setMessage('');
+
+    const reader = new FileReader();
+    reader.onload = (readerEvent) => {
+      const img = new Image();
+      img.onload = async () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const maxDim = 400;
+          let width = img.width;
+          let height = img.height;
+
+          const minSide = Math.min(width, height);
+          const startX = (width - minSide) / 2;
+          const startY = (height - minSide) / 2;
+
+          canvas.width = maxDim;
+          canvas.height = maxDim;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, startX, startY, minSide, minSide, 0, 0, maxDim, maxDim);
+
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.88);
+          setAvatar(compressedDataUrl);
+
+          const { data } = await api.put('/users/profile', {
+            avatar: compressedDataUrl,
+          });
+
+          if (data.success) {
+            updateUser(data.user);
+            setMessage('Profile image updated from gallery successfully!');
+          }
+        } catch (apiErr) {
+          setError(apiErr.response?.data?.message || 'Failed to update profile photo');
+        } finally {
+          setUploadingImage(false);
+        }
+      };
+      img.onerror = () => {
+        setError('Failed to process image');
+        setUploadingImage(false);
+      };
+      img.src = readerEvent.target.result;
+    };
+    reader.onerror = () => {
+      setError('Failed to read image file');
+      setUploadingImage(false);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveAvatar = async () => {
+    try {
+      setUploadingImage(true);
+      const defaultIdenticon = `https://api.dicebear.com/7.x/identicon/svg?seed=${user?.phone}`;
+      setAvatar(defaultIdenticon);
+      const { data } = await api.put('/users/profile', {
+        avatar: defaultIdenticon,
+      });
+      if (data.success) {
+        updateUser(data.user);
+        setMessage('Custom profile image removed. Reverted to default avatar.');
+      }
+    } catch (err) {
+      setError('Failed to remove custom profile photo');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   // OTP Verification State
   const [otpSent, setOtpSent] = useState(false);
@@ -172,8 +259,17 @@ export default function ProfilePage() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Avatar and Quick Overview Card */}
-          <div className="p-6 rounded-3xl bg-[#0c1220] border border-slate-800 flex flex-col items-center text-center shadow-lg">
-            <div className="relative mb-4">
+          <div className="p-6 rounded-3xl bg-[#0c1220] border border-slate-800 flex flex-col items-center text-center shadow-lg relative">
+            {/* Hidden native file input for gallery upload */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleImageFileChange}
+              accept="image/*"
+              className="hidden"
+            />
+
+            <div className="relative mb-3 group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
               <img
                 src={
                   avatar ||
@@ -181,9 +277,53 @@ export default function ProfilePage() {
                   `https://api.dicebear.com/7.x/identicon/svg?seed=${user?.phone}`
                 }
                 alt={user?.name}
-                className="w-28 h-28 rounded-full bg-slate-800 object-cover border-2 border-violet-500/40 shadow-md shadow-violet-900/30"
+                className="w-28 h-28 rounded-full bg-slate-800 object-cover border-2 border-violet-500/40 shadow-md shadow-violet-900/30 transition-transform group-hover:scale-102"
               />
               <span className="absolute bottom-1 right-1 w-5 h-5 rounded-full bg-emerald-500 border-2 border-[#0c1220]" />
+
+              {/* Camera icon button overlay */}
+              <div
+                className="absolute inset-0 rounded-full bg-black/50 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white text-[10px] font-semibold transition-all backdrop-blur-[2px]"
+                title="Upload Photo from Gallery"
+              >
+                {uploadingImage ? (
+                  <Loader2 className="w-6 h-6 animate-spin text-violet-400" />
+                ) : (
+                  <>
+                    <Camera className="w-5 h-5 mb-0.5 text-violet-300" />
+                    <span>Upload</span>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Upload from Gallery Action Buttons */}
+            <div className="flex items-center gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={uploadingImage}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600/20 hover:bg-violet-600 border border-violet-500/30 text-violet-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-50"
+              >
+                {uploadingImage ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <Upload className="w-3.5 h-3.5" />
+                )}
+                <span>{uploadingImage ? 'Uploading...' : 'Upload from Gallery'}</span>
+              </button>
+
+              {avatar && avatar.startsWith('data:') && (
+                <button
+                  type="button"
+                  onClick={handleRemoveAvatar}
+                  disabled={uploadingImage}
+                  className="p-1.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 transition-colors"
+                  title="Remove custom photo"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              )}
             </div>
 
             <h2 className="text-lg font-bold text-white">{user?.name}</h2>

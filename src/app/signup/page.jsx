@@ -51,11 +51,15 @@ function SignupForm() {
       await signup(formData);
       router.push('/chats');
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        err.message ||
-        'Failed to register. Please check your phone format (e.g. +919876543210).'
-      );
+      if (!err.response && (err.message === 'Network Error' || err.code === 'ERR_NETWORK')) {
+        setError('Cannot reach server. Please ensure the backend is running on port 5000 and MongoDB is active.');
+      } else {
+        setError(
+          err.response?.data?.message ||
+          err.message ||
+          'Failed to register. Please check your phone format (e.g. +919876543210).'
+        );
+      }
     } finally {
       setLoading(false);
     }
