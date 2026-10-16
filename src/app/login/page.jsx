@@ -7,15 +7,23 @@ import { MessageSquare, Phone, Lock, ArrowRight, Loader2, AlertCircle, Info } fr
 import { useAuth } from '../../hooks/useAuth';
 
 function LoginForm() {
-  const [phone, setPhone] = useState('');
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialPhone = searchParams.get('phone') || '';
+
+  const [phone, setPhone] = useState(initialPhone);
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   const isExpired = searchParams.get('expired') === 'true';
+
+  useEffect(() => {
+    if (initialPhone && !phone) {
+      setPhone(initialPhone);
+    }
+  }, [initialPhone]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

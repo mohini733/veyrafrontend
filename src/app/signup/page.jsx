@@ -90,9 +90,28 @@ function SignupForm() {
         {/* Card Form */}
         <div className="p-8 rounded-3xl bg-[#0c1220]/90 border border-slate-800 shadow-2xl shadow-violet-950/40 backdrop-blur-md">
           {error && (
-            <div className="mb-6 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-start gap-3 text-rose-400 text-xs">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
+            <div className="mb-6 p-3.5 rounded-xl bg-rose-500/10 border border-rose-500/30 flex flex-col gap-2.5 text-rose-300 text-xs">
+              <div className="flex items-start gap-2.5">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5 text-rose-400" />
+                <span className="leading-relaxed">{error}</span>
+              </div>
+              {error.toLowerCase().includes('already registered') && (
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-rose-500/20">
+                  <Link
+                    href={`/login?phone=${encodeURIComponent(formData.phone)}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white font-medium transition-all shadow-sm shadow-violet-600/30"
+                  >
+                    <span>Sign in with this number</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                  <Link
+                    href={`/forgot-password?phone=${encodeURIComponent(formData.phone)}`}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition-all"
+                  >
+                    Forgot Password?
+                  </Link>
+                </div>
+              )}
             </div>
           )}
 
