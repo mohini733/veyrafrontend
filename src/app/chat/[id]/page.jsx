@@ -70,7 +70,7 @@ function ChatConversationContent() {
   }
 
   return (
-    <div className="flex h-[100dvh] h-screen w-screen overflow-hidden bg-[#090d16] text-white">
+    <div className="fixed inset-0 w-full h-[100dvh] flex overflow-hidden bg-[#090d16] text-white">
       {/* App Sidebar - always accessible */}
       <AppSidebar onOpenSearch={() => setIsSearchOpen(true)} />
 

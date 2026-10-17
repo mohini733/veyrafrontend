@@ -3,6 +3,8 @@ import { connectDB } from '../../../../server/db';
 import { User } from '../../../../server/models/User';
 import { getAuthUserId } from '../../../../server/auth';
 
+export const dynamic = 'force-dynamic';
+
 const escapeRegex = (string) => string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
 export async function GET(request) {
