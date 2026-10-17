@@ -4,6 +4,7 @@ import { User } from '../../../../server/models/User';
 import { generateToken } from '../../../../server/auth';
 import {
   normalizePhoneNumber,
+  getPossiblePhones,
   isValidInternationalPhone,
 } from '../../../../server/smsProvider';
 
@@ -44,7 +45,8 @@ export async function POST(request) {
       );
     }
 
-    const userExists = await User.findOne({ phone: normalizedPhone });
+    const possiblePhones = getPossiblePhones(phone);
+    const userExists = await User.findOne({ phone: { $in: possiblePhones } });
     if (userExists) {
       return NextResponse.json(
         {

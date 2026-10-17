@@ -115,10 +115,15 @@ function ForgotPasswordForm() {
         }, 1200);
       }
     } catch (err) {
-      setError(
-        err.response?.data?.message ||
-        'Failed to reset password. Please verify the code and try again.'
-      );
+      const rawMsg = err.response?.data?.message || err.message || '';
+      if (rawMsg.includes('ECONNREFUSED') || rawMsg.includes('127.0.0.1:27017')) {
+        setError('Cannot connect to database. Please make sure MongoDB service is running.');
+      } else {
+        setError(
+          rawMsg ||
+          'Failed to reset password. Please verify the code and try again.'
+        );
+      }
     } finally {
       setLoading(false);
     }

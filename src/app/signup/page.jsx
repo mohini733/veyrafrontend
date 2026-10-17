@@ -51,12 +51,14 @@ function SignupForm() {
       await signup(formData);
       router.push('/chats');
     } catch (err) {
+      const rawMsg = err.response?.data?.message || err.message || '';
       if (!err.response && (err.message === 'Network Error' || err.code === 'ERR_NETWORK')) {
         setError('Cannot reach server. Please ensure the backend is running on port 5000 and MongoDB is active.');
+      } else if (rawMsg.includes('ECONNREFUSED') || rawMsg.includes('127.0.0.1:27017')) {
+        setError('Cannot connect to database. Please make sure MongoDB service is running on your machine (port 27017).');
       } else {
         setError(
-          err.response?.data?.message ||
-          err.message ||
+          rawMsg ||
           'Failed to register. Please check your phone format (e.g. +919876543210).'
         );
       }
