@@ -54,8 +54,8 @@ export const MessageInput = ({ onSendMessage, onTypingStart, onTypingStop, disab
   };
 
   return (
-    <div className="p-3 sm:p-4 bg-[#0c1220]/95 border-t border-slate-800/80 backdrop-blur-md">
-      <form onSubmit={handleSubmit} className="flex items-center gap-2 max-w-5xl mx-auto">
+    <div className="p-2.5 sm:p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-[#0c1220]/95 border-t border-slate-800/80 backdrop-blur-md shrink-0 z-30 w-full select-none">
+      <form onSubmit={handleSubmit} className="flex items-center gap-2 max-w-5xl mx-auto w-full">
         <div className="relative flex-1 flex items-center">
           <input
             ref={inputRef}
@@ -64,15 +64,16 @@ export const MessageInput = ({ onSendMessage, onTypingStart, onTypingStop, disab
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             disabled={disabled}
+            autoComplete="off"
             placeholder="Type your message..."
-            className="w-full pl-4 pr-10 py-3 rounded-2xl bg-[#090d16] border border-slate-700/80 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500 transition-all text-sm"
+            className="w-full pl-4 pr-4 py-3 rounded-2xl bg-[#090d16] border border-slate-700/80 text-white placeholder-slate-500 focus:outline-none focus:border-violet-500 focus:ring-2 focus:ring-violet-500/20 transition-all text-sm leading-relaxed"
           />
         </div>
 
         <button
           type="submit"
           disabled={!text.trim() || disabled}
-          className="flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-md shadow-violet-600/30 disabled:opacity-40 disabled:hover:scale-100 hover:scale-105 active:scale-95 transition-all shrink-0"
+          className="flex items-center justify-center w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white shadow-lg shadow-violet-600/30 disabled:opacity-30 disabled:hover:scale-100 hover:scale-105 active:scale-95 transition-all shrink-0 cursor-pointer"
           title="Send message"
         >
           <Send className="w-5 h-5 -ml-0.5" />

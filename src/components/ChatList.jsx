@@ -80,7 +80,7 @@ export const ChatList = ({ conversations = [], loading = false, onOpenSearch }) 
       </div>
 
       {/* Conversations Scroll Area */}
-      <div className="flex-1 overflow-y-auto divide-y divide-slate-800/40">
+      <div className="flex-1 overflow-y-auto divide-y divide-slate-800/40 pb-24 md:pb-4">
         {loading && (
           <div className="p-6 text-center text-xs text-slate-400 animate-pulse">
             Loading conversations...

@@ -51,6 +51,8 @@ export const AppSidebar = ({ onOpenSearch }) => {
     },
   ];
 
+  const isInsideChat = pathname.startsWith('/chat/');
+
   return (
     <>
       {/* Desktop / Tablet Left Sidebar */}
@@ -173,37 +175,39 @@ export const AppSidebar = ({ onOpenSearch }) => {
         </div>
       </aside>
 
-      {/* Mobile Bottom Navigation Bar (Smartphones) */}
-      <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0b0f19]/95 backdrop-blur-xl border-t border-slate-800/80 z-50 flex items-center justify-around px-2 select-none shadow-2xl">
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all ${
-                item.active
-                  ? 'text-violet-400 font-bold scale-105'
-                  : 'text-slate-400 hover:text-slate-200'
-              }`}
-            >
-              <div className="relative">
-                <Icon
-                  className={`w-5 h-5 ${
-                    item.active ? 'text-violet-400 stroke-[2.5]' : 'text-slate-400'
-                  }`}
-                />
-                {item.active && (
-                  <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-violet-400 shadow-sm shadow-violet-400" />
-                )}
-              </div>
-              <span className="text-[10px] mt-0.5 tracking-tight font-medium">
-                {item.label === 'External SMS' ? 'SMS' : item.label}
-              </span>
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Mobile Bottom Navigation Bar (Smartphones) - Only on top-level pages, hidden inside active chat */}
+      {!isInsideChat && (
+        <nav className="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-[#0b0f19]/95 backdrop-blur-xl border-t border-slate-800/80 z-50 flex items-center justify-around px-2 select-none shadow-2xl pb-[env(safe-area-inset-bottom)]">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`flex flex-col items-center justify-center py-1.5 px-3 rounded-xl transition-all ${
+                  item.active
+                    ? 'text-violet-400 font-bold scale-105'
+                    : 'text-slate-400 hover:text-slate-200'
+                }`}
+              >
+                <div className="relative">
+                  <Icon
+                    className={`w-5 h-5 ${
+                      item.active ? 'text-violet-400 stroke-[2.5]' : 'text-slate-400'
+                    }`}
+                  />
+                  {item.active && (
+                    <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-violet-400 shadow-sm shadow-violet-400" />
+                  )}
+                </div>
+                <span className="text-[10px] mt-0.5 tracking-tight font-medium">
+                  {item.label === 'External SMS' ? 'SMS' : item.label}
+                </span>
+              </Link>
+            );
+          })}
+        </nav>
+      )}
     </>
   );
 };

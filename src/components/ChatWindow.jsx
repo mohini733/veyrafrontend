@@ -232,7 +232,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-[#090d16] overflow-hidden">
+    <div className="flex-1 flex flex-col h-full min-h-0 bg-[#090d16] overflow-hidden">
       {/* Top Header */}
       <div className="h-16 px-4 border-b border-slate-800/80 bg-[#0c1220]/90 flex items-center justify-between shrink-0 backdrop-blur-md z-10">
         <div className="flex items-center gap-3">
@@ -300,7 +300,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
       </div>
 
       {/* Messages Scroll Area with Wallpaper */}
-      <div className="flex-1 relative overflow-hidden flex flex-col bg-[#090d16]">
+      <div className="flex-1 relative overflow-hidden flex flex-col min-h-0 bg-[#090d16]">
         {/* Fixed Wallpaper Layer */}
         {wallpaper ? (
           <>
@@ -316,7 +316,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
         ) : null}
 
         {/* Scrollable Messages Content */}
-        <div className="relative z-10 flex-1 overflow-y-auto p-4 sm:p-6 space-y-2">
+        <div className="relative z-10 flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-2">
         {/* End-to-end indicator notice */}
         <div className="flex items-center justify-center my-3">
           <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#111827]/80 border border-slate-800 text-[11px] text-slate-400">

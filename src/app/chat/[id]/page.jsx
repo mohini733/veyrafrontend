@@ -70,7 +70,7 @@ function ChatConversationContent() {
   }
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden bg-[#090d16] text-white">
+    <div className="flex h-[100dvh] h-screen w-screen overflow-hidden bg-[#090d16] text-white">
       {/* App Sidebar - always accessible */}
       <AppSidebar onOpenSearch={() => setIsSearchOpen(true)} />
 
@@ -84,7 +84,7 @@ function ChatConversationContent() {
       </div>
 
       {/* Active Chat Window */}
-      <main className="flex-1 flex flex-col h-full overflow-hidden">
+      <main className="flex-1 flex flex-col h-full min-h-0 overflow-hidden">
         {error ? (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center bg-[#090d16]">
             <p className="text-base text-rose-400 font-semibold mb-2">{error}</p>
