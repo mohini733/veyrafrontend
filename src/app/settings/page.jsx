@@ -24,6 +24,7 @@ import {
   THEMES,
   WALLPAPER_PRESETS,
   APP_ICON_PRESETS,
+  getWallpaperStyle,
 } from '../../context/CustomizationContext';
 import api from '../../lib/api';
 import AppSidebar from '../../components/AppSidebar';
@@ -385,31 +386,24 @@ export default function SettingsPage() {
               </div>
 
               {/* Live Preview Box */}
-              <div className="relative rounded-2xl overflow-hidden border border-slate-800 h-36 bg-[#090d16] flex flex-col justify-end p-3">
-                {wallpaper && (
-                  <div
-                    className="absolute inset-0"
-                    style={{
-                      backgroundImage:
-                        wallpaper.startsWith('data:') || wallpaper.startsWith('http')
-                          ? `url("${wallpaper}")`
-                          : wallpaper,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }}
-                  />
-                )}
-                {wallpaper && (
-                  <div
-                    className="absolute inset-0"
-                    style={{ backgroundColor: `rgba(9, 13, 22, ${wallpaperDim / 100})` }}
-                  />
-                )}
-                <div className="relative z-10 space-y-1.5">
-                  <div className="p-2 rounded-xl bg-slate-800/80 text-[10px] text-slate-300 w-fit max-w-[80%]">
+              <div className="relative rounded-2xl overflow-hidden border border-slate-800 h-40 bg-[#090d16] flex flex-col justify-end p-3 shadow-inner">
+                {wallpaper ? (
+                  <>
+                    <div
+                      className="absolute inset-0 transition-all duration-300 pointer-events-none"
+                      style={getWallpaperStyle(wallpaper, wallpaperDim).style}
+                    />
+                    <div
+                      className="absolute inset-0 pointer-events-none transition-all duration-300"
+                      style={getWallpaperStyle(wallpaper, wallpaperDim).dimStyle}
+                    />
+                  </>
+                ) : null}
+                <div className="relative z-10 space-y-1.5 pointer-events-none">
+                  <div className="p-2 rounded-xl bg-slate-800/85 backdrop-blur-sm text-[10px] text-slate-200 w-fit max-w-[80%] border border-slate-700/50 shadow-md">
                     Hey! How does the new wallpaper look?
                   </div>
-                  <div className="p-2 rounded-xl bg-violet-600 text-[10px] text-white w-fit max-w-[80%] ml-auto">
+                  <div className="p-2 rounded-xl bg-violet-600 text-[10px] text-white w-fit max-w-[80%] ml-auto shadow-md shadow-violet-900/30">
                     Looks fantastic and crystal clear! ✨
                   </div>
                 </div>
@@ -425,8 +419,8 @@ export default function SettingsPage() {
                 </div>
                 <input
                   type="range"
-                  min="20"
-                  max="90"
+                  min="10"
+                  max="80"
                   value={wallpaperDim}
                   onChange={(e) => updateWallpaperDim(Number(e.target.value))}
                   className="w-full accent-violet-600 cursor-pointer"
@@ -446,14 +440,24 @@ export default function SettingsPage() {
                     <button
                       key={p.id}
                       type="button"
-                      onClick={() => setWallpaper(p.value)}
-                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer ${
+                      onClick={() => {
+                        setWallpaper(p.value);
+                        setWallpaperFeedback(`Applied "${p.name}" wallpaper!`);
+                        setTimeout(() => setWallpaperFeedback(''), 3000);
+                      }}
+                      className={`p-2.5 rounded-xl border text-center transition-all cursor-pointer relative group ${
                         isSelected
-                          ? 'border-violet-500 bg-violet-600/20 text-white font-bold ring-1 ring-violet-500'
-                          : 'border-slate-800 bg-[#090d16] text-slate-400 hover:text-white'
+                          ? 'border-violet-500 bg-violet-600/20 text-white font-bold ring-2 ring-violet-500 shadow-lg shadow-violet-950/40'
+                          : 'border-slate-800 bg-[#090d16] text-slate-400 hover:text-white hover:border-slate-700'
                       }`}
                     >
-                      <div className={`w-full h-8 rounded-lg mb-1.5 border border-slate-700/60 ${p.preview}`} />
+                      <div className={`w-full h-9 rounded-lg mb-1.5 border border-slate-700/60 overflow-hidden relative ${p.preview}`}>
+                        {isSelected && (
+                          <div className="absolute inset-0 bg-violet-600/20 flex items-center justify-center">
+                            <Check className="w-3.5 h-3.5 text-white" />
+                          </div>
+                        )}
+                      </div>
                       <span className="text-[11px] block truncate">{p.name}</span>
                     </button>
                   );

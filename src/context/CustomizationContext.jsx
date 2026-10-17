@@ -85,31 +85,84 @@ export const WALLPAPER_PRESETS = [
     id: 'doodle',
     name: 'Veyra Chat Doodles',
     type: 'pattern',
-    value: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80"><path d="M14 16h8v6h-8zM50 16h10v6H50zM24 48h10v6H24zM60 52h8v6h-8z" fill="%238b5cf6" fill-opacity="0.06"/><circle cx="36" cy="24" r="4" fill="%23a78bfa" fill-opacity="0.08"/><circle cx="68" cy="38" r="3" fill="%238b5cf6" fill-opacity="0.07"/><path d="M10 60l6-6 6 6-6 6z" fill="%236366f1" fill-opacity="0.07"/></svg>`,
-    preview: 'bg-[#090d16] bg-[radial-gradient(#8b5cf6_1px,transparent_1px)] [background-size:16px_16px]',
+    value:
+      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIxMjAiIGhlaWdodD0iMTIwIiB2aWV3Qm94PSIwIDAgMTIwIDEyMCI+CiAgPGcgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYTc4YmZhIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIiBvcGFjaXR5PSIwLjMyIj4KICAgIDxwYXRoIGQ9Ik0yMCAyNWgxOGE0IDQgMCAwIDEgNCA0djEwYTQgNCAwIDAgMS00IDRoLTEwbC02IDV2LTVoLTJhNCA0IDAgMCAxLTQtNFYyOWE0IDQgMCAwIDEgNC00eiIvPgogICAgPHBhdGggZD0iTTgwIDc1aDE4YTQgNCAwIDAgMSA0IDR2MTBhNCA0IDAgMCAxLTQgNGgtMTBsLTYgNXYtNWgtMmE0IDQgMCAwIDEtNC00Vjc5YTQgNCAwIDAgMSA0LTR6Ii8+CiAgICA8Y2lyY2xlIGN4PSIzMCIgY3k9Ijg1IiByPSI2Ii8+CiAgICA8cGF0aCBkPSJNNzUgMjVsMTUgNi02IDE1Ii8+CiAgICA8cGF0aCBkPSJNNDggNjBsOC04IDggOCIvPgogICAgPGNpcmNsZSBjeD0iOTAiIGN5PSI0NSIgcj0iMi41IiBmaWxsPSIjYTc4YmZhIi8+CiAgICA8Y2lyY2xlIGN4PSI2MCIgY3k9Ijk1IiByPSIyLjUiIGZpbGw9IiNhNzhiZmEiLz4KICAgIDxwYXRoIGQ9Ik0xNSA2NWw0IDQgNi02Ii8+CiAgICA8cGF0aCBkPSJNOTUgMTVsMiA0IDQgMi00IDItMiA0LTItNC00LTIgNC0yeiIgZmlsbD0iI2E3OGJmYSIvPgogIDwvZz4KPC9zdmc+',
+    preview: 'bg-[#090d16] bg-[radial-gradient(#8b5cf6_1.5px,transparent_1.5px)] [background-size:16px_16px]',
   },
   {
     id: 'geometric',
     name: 'Cyber Grid',
     type: 'pattern',
-    value: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40"><path d="M0 40L40 0H20L0 20M40 40V20L20 40" fill="none" stroke="%238b5cf6" stroke-width="0.8" stroke-opacity="0.1"/></svg>`,
-    preview: 'bg-[#0b0f19] bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:24px_24px]',
+    value:
+      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCIgdmlld0JveD0iMCAwIDQwIDQwIj4KICA8cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOGI1Y2Y2IiBzdHJva2Utd2lkdGg9IjEiIG9wYWNpdHk9IjAuMjUiLz4KPC9zdmc+',
+    preview: 'bg-[#0b0f19] bg-[linear-gradient(to_right,#8b5cf633_1px,transparent_1px),linear-gradient(to_bottom,#8b5cf633_1px,transparent_1px)] bg-[size:16px_16px]',
   },
   {
     id: 'cosmic',
     name: 'Starry Nebula',
     type: 'gradient',
-    value: 'radial-gradient(ellipse at top, rgba(139,92,246,0.18), transparent 60%), radial-gradient(ellipse at bottom, rgba(59,130,246,0.12), transparent 70%), #090d16',
-    preview: 'bg-gradient-to-b from-violet-950/60 via-slate-950 to-indigo-950/70',
+    value:
+      'radial-gradient(ellipse at top left, rgba(139, 92, 246, 0.45) 0%, transparent 60%), radial-gradient(ellipse at bottom right, rgba(59, 130, 246, 0.35) 0%, transparent 70%)',
+    preview: 'bg-gradient-to-br from-violet-900/80 via-slate-950 to-indigo-900/80',
   },
   {
     id: 'minimal_lines',
     name: 'Minimal Wave',
     type: 'pattern',
-    value: `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"><circle cx="30" cy="30" r="1.5" fill="%2394a3b8" fill-opacity="0.15"/></svg>`,
-    preview: 'bg-[#090d16] bg-[radial-gradient(#64748b_1px,transparent_1px)] [background-size:12px_12px]',
+    value:
+      'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiIgaGVpZ2h0PSIzMiIgdmlld0JveD0iMCAwIDMyIDMyIj4KICA8Y2lyY2xlIGN4PSIxNiIgY3k9IjE2IiByPSIxLjgiIGZpbGw9IiNhNzhiZmEiIG9wYWNpdHk9IjAuMzUiLz4KPC9zdmc+',
+    preview: 'bg-[#090d16] bg-[radial-gradient(#a78bfa_1.5px,transparent_1.5px)] [background-size:12px_12px]',
   },
 ];
+
+export const getWallpaperStyle = (wallpaper, wallpaperDim = 35) => {
+  if (!wallpaper) {
+    return {
+      hasWallpaper: false,
+      style: {},
+      dimStyle: {},
+    };
+  }
+
+  const isDataOrUrl =
+    wallpaper.startsWith('data:') ||
+    wallpaper.startsWith('http://') ||
+    wallpaper.startsWith('https://');
+
+  const isPattern =
+    wallpaper.includes('data:image/svg+xml') ||
+    wallpaper.includes('pattern') ||
+    wallpaper.includes('doodle') ||
+    wallpaper.includes('grid') ||
+    wallpaper.includes('wave');
+
+  let bgSize = 'cover';
+  let bgRepeat = 'no-repeat';
+
+  if (isPattern) {
+    bgRepeat = 'repeat';
+    if (wallpaper.includes('PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCI')) {
+      bgSize = '40px 40px';
+    } else if (wallpaper.includes('PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMiI')) {
+      bgSize = '32px 32px';
+    } else {
+      bgSize = '120px 120px';
+    }
+  }
+
+  return {
+    hasWallpaper: true,
+    style: {
+      backgroundImage: isDataOrUrl ? `url("${wallpaper}")` : wallpaper,
+      backgroundSize: bgSize,
+      backgroundRepeat: bgRepeat,
+      backgroundPosition: 'center',
+    },
+    dimStyle: {
+      backgroundColor: `rgba(9, 13, 22, ${wallpaperDim / 100})`,
+    },
+  };
+};
 
 export const APP_ICON_PRESETS = [
   {
