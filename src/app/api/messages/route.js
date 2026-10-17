@@ -15,60 +15,91 @@ export async function POST(request) {
       );
     }
 
-    const { recipientId, text } = await request.json();
+    const { conversationId, recipientId, text } = await request.json();
 
-    if (!recipientId || !text || !text.trim()) {
+    if (!text || !text.trim()) {
       return NextResponse.json(
-        { success: false, message: 'Recipient and text are required' },
+        { success: false, message: 'Message text is required' },
         { status: 400 }
       );
     }
 
     await connectDB();
 
-    const recipient = await User.findById(recipientId);
-    if (!recipient) {
+    let targetConversation = null;
+    let targetRecipientId = recipientId;
+
+    if (conversationId) {
+      targetConversation = await Conversation.findById(conversationId);
+      if (!targetConversation) {
+        return NextResponse.json(
+          { success: false, message: 'Conversation not found' },
+          { status: 404 }
+        );
+      }
+
+      const isParticipant = targetConversation.participants.some(
+        (p) => p && p.toString() === senderId.toString()
+      );
+      if (!isParticipant) {
+        return NextResponse.json(
+          { success: false, message: 'Forbidden: You are not in this conversation' },
+          { status: 403 }
+        );
+      }
+
+      if (!targetRecipientId) {
+        const otherP = targetConversation.participants.find(
+          (p) => p && p.toString() !== senderId.toString()
+        );
+        targetRecipientId = otherP ? otherP.toString() : null;
+      }
+    } else if (targetRecipientId) {
+      targetConversation = await Conversation.findOne({
+        participants: { $all: [senderId, targetRecipientId], $size: 2 },
+      });
+
+      if (!targetConversation) {
+        targetConversation = await Conversation.create({
+          participants: [senderId, targetRecipientId],
+          lastMessageAt: new Date(),
+        });
+      }
+    } else {
       return NextResponse.json(
-        { success: false, message: 'Recipient user not found' },
-        { status: 404 }
+        { success: false, message: 'Either conversationId or recipientId is required' },
+        { status: 400 }
       );
     }
 
-    // Find or create conversation
-    let conversation = await Conversation.findOne({
-      participants: { $all: [senderId, recipientId] },
-    });
-
-    if (!conversation) {
-      conversation = await Conversation.create({
-        participants: [senderId, recipientId],
-        lastMessageAt: new Date(),
-      });
-    }
-
-    // Create message
+    // Create the message
     const message = await Message.create({
-      conversationId: conversation._id,
+      conversationId: targetConversation._id,
       sender: senderId,
-      recipient: recipientId,
+      recipient: targetRecipientId,
       text: text.trim(),
       status: 'sent',
     });
 
-    // Update conversation lastMessage
-    conversation.lastMessage = message._id;
-    conversation.lastMessageAt = new Date();
-    await conversation.save();
+    // Update conversation metadata
+    targetConversation.lastMessage = message._id;
+    targetConversation.lastMessageAt = new Date();
+    await targetConversation.save();
+
+    const populated = await Message.findById(message._id)
+      .populate('sender', '_id name avatar')
+      .populate('recipient', '_id name avatar');
 
     return NextResponse.json(
       {
         success: true,
-        message,
-        conversationId: conversation._id,
+        message: populated,
+        conversationId: targetConversation._id,
       },
       { status: 201 }
     );
   } catch (error) {
+    console.error('[Veyra Send Message Error]:', error);
     return NextResponse.json(
       { success: false, message: error.message },
       { status: 500 }

@@ -5,6 +5,10 @@ import { Message } from '../../../../server/models/Message';
 import { User } from '../../../../server/models/User';
 import { getAuthUserId } from '../../../../server/auth';
 
+/**
+ * GET /api/messages/conversations
+ * Get all conversations for currently logged-in user
+ */
 export async function GET(request) {
   try {
     const userId = getAuthUserId(request);
@@ -20,7 +24,7 @@ export async function GET(request) {
     const conversations = await Conversation.find({
       participants: userId,
     })
-      .populate('participants', 'name phone avatar online lastSeen')
+      .populate('participants', '_id name phone avatar about online lastSeen isPhoneVerified')
       .populate('lastMessage')
       .sort({ lastMessageAt: -1 });
 
@@ -38,6 +42,7 @@ export async function GET(request) {
 
         return {
           _id: conv._id,
+          participants: conv.participants,
           participant: otherParticipant || null,
           lastMessage: conv.lastMessage || null,
           lastMessageAt: conv.lastMessageAt,
@@ -51,8 +56,80 @@ export async function GET(request) {
       conversations: formatted,
     });
   } catch (error) {
+    console.error('[Veyra Get Conversations Error]:', error);
     return NextResponse.json(
       { success: false, message: error.message },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * POST /api/messages/conversations
+ * Start a new conversation or return existing conversation with recipientId
+ */
+export async function POST(request) {
+  try {
+    const currentUserId = getAuthUserId(request);
+    if (!currentUserId) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { recipientId } = await request.json();
+    if (!recipientId) {
+      return NextResponse.json(
+        { success: false, message: 'Recipient ID is required' },
+        { status: 400 }
+      );
+    }
+
+    if (recipientId.toString() === currentUserId.toString()) {
+      return NextResponse.json(
+        { success: false, message: 'You cannot start a conversation with yourself' },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+
+    const recipient = await User.findById(recipientId);
+    if (!recipient) {
+      return NextResponse.json(
+        { success: false, message: 'Recipient user not found' },
+        { status: 404 }
+      );
+    }
+
+    // Look for existing conversation between these 2 users
+    let conversation = await Conversation.findOne({
+      participants: { $all: [currentUserId, recipientId], $size: 2 },
+    })
+      .populate('participants', '_id name phone avatar about online lastSeen isPhoneVerified')
+      .populate('lastMessage');
+
+    if (!conversation) {
+      conversation = await Conversation.create({
+        participants: [currentUserId, recipientId],
+        lastMessageAt: new Date(),
+      });
+
+      conversation = await Conversation.findById(conversation._id).populate(
+        'participants',
+        '_id name phone avatar about online lastSeen isPhoneVerified'
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      conversation,
+    });
+  } catch (error) {
+    console.error('[Veyra Create Conversation Error]:', error);
+    return NextResponse.json(
+      { success: false, message: error.message || 'Could not start conversation' },
       { status: 500 }
     );
   }
