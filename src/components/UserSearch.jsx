@@ -36,7 +36,8 @@ export const UserSearch = ({ isOpen, onClose, onConversationStarted }) => {
       setLoading(true);
       setError('');
       setSearched(true);
-      const { data } = await api.get(`/users/search?phone=${encodeURIComponent(query.trim())}`);
+      const encoded = encodeURIComponent(query.trim());
+      const { data } = await api.get(`/users/search?phone=${encoded}&q=${encoded}`);
       setResults(data.users || []);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to search users');
