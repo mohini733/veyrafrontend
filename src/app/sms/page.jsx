@@ -105,6 +105,8 @@ function SMSComposeForm() {
       });
 
       setResult(data);
+      setToPhone('');
+      setMessageText('');
       loadHistory();
     } catch (err) {
       setError({
