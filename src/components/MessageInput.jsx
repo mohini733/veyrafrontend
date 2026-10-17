@@ -220,14 +220,14 @@ export const MessageInput = ({ onSendMessage, onTypingStart, onTypingStop, disab
           <button
             type="button"
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className={`emoji-toggle-btn absolute left-2 p-1.5 rounded-xl transition-all cursor-pointer z-10 ${
+            className={`emoji-toggle-btn absolute left-2.5 top-1/2 -translate-y-1/2 p-1.5 rounded-xl transition-all cursor-pointer z-10 flex items-center justify-center ${
               showEmojiPicker
                 ? 'text-violet-400 bg-violet-600/20'
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/80'
             }`}
             title="Choose emoji"
           >
-            <Smile className="w-5 h-5" />
+            <Smile className="w-5 h-5 shrink-0" />
           </button>
 
           <input
