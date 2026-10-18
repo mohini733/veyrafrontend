@@ -15,6 +15,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useCustomization, getWallpaperStyle } from '../context/CustomizationContext';
 import { getSocket } from '../lib/socket';
 import api from '../lib/api';
+import { playMessageSound } from '../lib/sound';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 
@@ -93,6 +94,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
         // If I am the recipient of this new incoming message, acknowledge read immediately
         if (newMsg.sender?._id?.toString() !== currentUser?._id?.toString()) {
           socket.emit('mark_messages_read', { conversationId });
+          playMessageSound();
         }
 
         setTimeout(() => scrollToBottom('smooth'), 50);
@@ -151,8 +153,47 @@ export const ChatWindow = ({ conversation, onBack }) => {
     };
   }, [conversationId, currentUser?._id]);
 
-  // Send message handler
-  const handleSendMessage = (text) => {
+  // Polling fallback to guarantee 100% reliable real-time messages even without WebSocket
+  useEffect(() => {
+    if (!conversationId) return;
+
+    const interval = setInterval(async () => {
+      if (typeof document !== 'undefined' && document.hidden) return;
+
+      try {
+        const { data } = await api.get(`/messages/${conversationId}`);
+        if (data.success && Array.isArray(data.messages)) {
+          setMessages((prev) => {
+            if (data.messages.length > prev.length) {
+              const prevIds = new Set(prev.map((m) => m._id));
+              const hasNewIncoming = data.messages.some(
+                (m) =>
+                  !prevIds.has(m._id) &&
+                  m.sender?._id?.toString() !== currentUser?._id?.toString()
+              );
+              if (hasNewIncoming) {
+                playMessageSound();
+                setTimeout(() => scrollToBottom('smooth'), 50);
+              }
+              return data.messages;
+            }
+            return prev;
+          });
+        }
+      } catch (err) {
+        // Silent catch for background polling
+      }
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [conversationId, currentUser?._id]);
+
+  // Send message handler (supports text and camera photos)
+  const handleSendMessage = (content) => {
+    const isObj = typeof content === 'object' && content !== null;
+    const text = isObj ? content.text || '' : content;
+    const image = isObj ? content.image || null : null;
+
     const socket = getSocket();
     const tempId = 'temp_' + Date.now();
 
@@ -166,7 +207,9 @@ export const ChatWindow = ({ conversation, onBack }) => {
         avatar: currentUser?.avatar,
       },
       recipient: partner,
-      text,
+      text: text || (image ? '📷 Photo' : ''),
+      image,
+      mediaType: image ? 'image' : 'text',
       status: 'sent',
       createdAt: new Date().toISOString(),
     };
@@ -177,7 +220,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
     if (socket && socket.connected) {
       socket.emit(
         'send_message',
-        { conversationId, text, tempId },
+        { conversationId, text, image, tempId },
         (response) => {
           if (response?.success && response.message) {
             setMessages((prev) =>
@@ -189,7 +232,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
     } else {
       // Fallback to REST API if socket temporarily disconnected
       api
-        .post('/messages', { conversationId, text })
+        .post('/messages', { conversationId, text, image })
         .then(({ data }) => {
           if (data.success && data.message) {
             setMessages((prev) =>

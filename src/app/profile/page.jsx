@@ -22,6 +22,7 @@ import { useAuth } from '../../hooks/useAuth';
 import api from '../../lib/api';
 import AppSidebar from '../../components/AppSidebar';
 import LoadingState from '../../components/LoadingState';
+import CameraModal from '../../components/CameraModal';
 
 export default function ProfilePage() {
   const { user, isAuthenticated, loading: authLoading, updateUser, refreshUser } = useAuth();
@@ -35,8 +36,29 @@ export default function ProfilePage() {
   const [avatar, setAvatar] = useState(user?.avatar || '');
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+
+  // Handle setting avatar from camera with live filter
+  const handleCameraCapture = async ({ image }) => {
+    if (!image) return;
+    try {
+      setUploadingImage(true);
+      setError('');
+      setMessage('');
+      setAvatar(image);
+      const { data } = await api.put('/users/profile', { avatar: image });
+      if (data.success) {
+        updateUser(data.user);
+        setMessage('Profile photo updated from camera filter successfully!');
+      }
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to update profile photo');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   // Handle uploading custom photo from gallery
   const handleImageFileChange = (e) => {
@@ -297,20 +319,31 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            {/* Upload from Gallery Action Buttons */}
-            <div className="flex items-center gap-2 mb-3">
+            {/* Upload & Camera Action Buttons */}
+            <div className="flex flex-wrap items-center justify-center gap-2 mb-3">
+              <button
+                type="button"
+                onClick={() => setIsCameraOpen(true)}
+                disabled={uploadingImage}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-xs font-semibold transition-all shadow-md shadow-violet-900/30 cursor-pointer disabled:opacity-50"
+                title="Take photo with camera & live filters"
+              >
+                <Camera className="w-3.5 h-3.5" />
+                <span>Camera & Filters</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploadingImage}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-violet-600/20 hover:bg-violet-600 border border-violet-500/30 text-violet-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-50"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white text-xs font-semibold transition-all shadow-sm cursor-pointer disabled:opacity-50"
               >
                 {uploadingImage ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
                 ) : (
                   <Upload className="w-3.5 h-3.5" />
                 )}
-                <span>{uploadingImage ? 'Uploading...' : 'Upload from Gallery'}</span>
+                <span>Gallery</span>
               </button>
 
               {avatar && avatar.startsWith('data:') && (
@@ -318,7 +351,7 @@ export default function ProfilePage() {
                   type="button"
                   onClick={handleRemoveAvatar}
                   disabled={uploadingImage}
-                  className="p-1.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 transition-colors"
+                  className="p-1.5 rounded-xl bg-slate-800 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 border border-slate-700 transition-colors cursor-pointer"
                   title="Remove custom photo"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
@@ -518,6 +551,14 @@ export default function ProfilePage() {
           </div>
         </div>
       </main>
+
+      {/* Camera Modal with Live Filters */}
+      <CameraModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleCameraCapture}
+        title="Take Profile Photo with Filters"
+      />
     </div>
   );
 }

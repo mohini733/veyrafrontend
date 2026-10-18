@@ -22,8 +22,17 @@ const messageSchema = new mongoose.Schema(
     },
     text: {
       type: String,
-      required: [true, 'Message text cannot be empty'],
+      default: '',
       trim: true,
+    },
+    image: {
+      type: String,
+      default: null,
+    },
+    mediaType: {
+      type: String,
+      enum: ['text', 'image'],
+      default: 'text',
     },
     status: {
       type: String,

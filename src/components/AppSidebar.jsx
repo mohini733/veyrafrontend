@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -12,14 +12,17 @@ import {
   LogOut,
   Search,
   ShieldCheck,
+  Camera,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useCustomization, APP_ICON_PRESETS } from '../context/CustomizationContext';
+import CameraModal from './CameraModal';
 
 export const AppSidebar = ({ onOpenSearch }) => {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const { appIcon, customAppIcon } = useCustomization();
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
 
   const activeIconPreset =
     APP_ICON_PRESETS.find((p) => p.id === appIcon) || APP_ICON_PRESETS[0];
@@ -53,12 +56,27 @@ export const AppSidebar = ({ onOpenSearch }) => {
 
   const isInsideChat = pathname.startsWith('/chat/');
 
+  const handleSidebarCameraCapture = ({ image, caption }) => {
+    // When photo is taken from sidebar, download it directly with timestamp
+    if (!image) return;
+    try {
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `veyra_filtered_photo_${Date.now()}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (e) {
+      console.warn('Failed to auto-download image:', e);
+    }
+  };
+
   return (
     <>
       {/* Desktop / Tablet Left Sidebar */}
       <aside className="hidden md:flex md:w-20 lg:w-64 bg-[#0b0f19] border-r border-slate-800 flex-col justify-between py-5 px-2 md:px-3 lg:px-4 select-none shrink-0 z-30">
         {/* Top Branding */}
-        <div className="flex flex-col gap-6">
+        <div className="flex flex-col gap-5">
           <Link
             href="/chats"
             className="flex items-center gap-3 px-1 md:px-2 group"
@@ -87,22 +105,35 @@ export const AppSidebar = ({ onOpenSearch }) => {
             </div>
           </Link>
 
-          {/* Quick Search Action */}
-          {onOpenSearch && (
+          {/* Quick Actions (Search + Live Camera) */}
+          <div className="flex flex-col gap-2">
+            {onOpenSearch && (
+              <button
+                onClick={onOpenSearch}
+                className="flex items-center gap-3 w-full py-2.5 px-3 rounded-xl bg-[#131c31] border border-violet-500/20 text-slate-300 hover:text-white hover:border-violet-500/50 hover:bg-[#19243f] transition-all group cursor-pointer"
+                title="Search registered users by phone"
+              >
+                <Search className="w-5 h-5 text-violet-400 group-hover:scale-110 transition-transform" />
+                <span className="hidden lg:inline text-xs font-medium text-slate-300">
+                  Find by Phone...
+                </span>
+              </button>
+            )}
+
             <button
-              onClick={onOpenSearch}
-              className="flex items-center gap-3 w-full py-2.5 px-3 rounded-xl bg-[#131c31] border border-violet-500/20 text-slate-300 hover:text-white hover:border-violet-500/50 hover:bg-[#19243f] transition-all group cursor-pointer"
-              title="Search registered users by phone"
+              onClick={() => setIsCameraOpen(true)}
+              className="flex items-center gap-3 w-full py-2.5 px-3 rounded-xl bg-violet-600/15 border border-violet-500/30 text-violet-300 hover:text-white hover:bg-violet-600/30 transition-all group cursor-pointer"
+              title="Open Camera with Live Filters"
             >
-              <Search className="w-5 h-5 text-violet-400 group-hover:scale-110 transition-transform" />
-              <span className="hidden lg:inline text-xs font-medium text-slate-300">
-                Find by Phone...
+              <Camera className="w-5 h-5 text-violet-400 group-hover:scale-110 transition-transform" />
+              <span className="hidden lg:inline text-xs font-semibold text-violet-200">
+                Camera & Filters
               </span>
             </button>
-          )}
+          </div>
 
           {/* Navigation list */}
-          <nav className="flex flex-col gap-1.5 mt-2">
+          <nav className="flex flex-col gap-1.5 mt-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               return (
@@ -132,7 +163,7 @@ export const AppSidebar = ({ onOpenSearch }) => {
         <div className="flex flex-col gap-3 pt-4 border-t border-slate-800">
           <Link
             href="/profile"
-            className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#111827] transition-colors group"
+            className="flex items-center gap-3 p-2 rounded-xl hover:bg-[#111827] transition-colors group cursor-pointer"
             title="Account Profile"
           >
             <div className="relative">
@@ -166,7 +197,7 @@ export const AppSidebar = ({ onOpenSearch }) => {
 
           <button
             onClick={logout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors w-full cursor-pointer"
+            className="flex items-center gap-3 p-2.5 rounded-xl text-slate-400 hover:text-rose-400 hover:bg-rose-500/10 transition-colors w-full cursor-pointer"
             title="Logout"
           >
             <LogOut className="w-5 h-5 shrink-0" />
@@ -206,8 +237,26 @@ export const AppSidebar = ({ onOpenSearch }) => {
               </Link>
             );
           })}
+
+          {/* Quick Camera button on Mobile bottom bar */}
+          <button
+            type="button"
+            onClick={() => setIsCameraOpen(true)}
+            className="flex flex-col items-center justify-center py-1.5 px-3 rounded-xl text-slate-400 hover:text-violet-300 transition-all cursor-pointer"
+          >
+            <Camera className="w-5 h-5 text-violet-400" />
+            <span className="text-[10px] mt-0.5 tracking-tight font-medium">Camera</span>
+          </button>
         </nav>
       )}
+
+      {/* Camera Modal with Live Filters */}
+      <CameraModal
+        isOpen={isCameraOpen}
+        onClose={() => setIsCameraOpen(false)}
+        onCapture={handleSidebarCameraCapture}
+        title="Live Camera & Filters"
+      />
     </>
   );
 };

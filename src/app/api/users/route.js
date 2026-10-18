@@ -15,9 +15,9 @@ export async function GET(request) {
 
     await connectDB();
     const users = await User.find({ _id: { $ne: userId } })
-      .select('name phone avatar about online lastSeen isPhoneVerified')
-      .sort({ name: 1 })
-      .limit(50);
+      .select('_id name phone avatar about online lastSeen isPhoneVerified createdAt')
+      .sort({ createdAt: -1 })
+      .limit(100);
 
     return NextResponse.json({
       success: true,

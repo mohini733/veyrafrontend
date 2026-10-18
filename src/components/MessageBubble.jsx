@@ -1,10 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, CheckCheck } from 'lucide-react';
+import { Check, CheckCheck, X, Download, Maximize2 } from 'lucide-react';
 
 export const MessageBubble = ({ message, isMine }) => {
+  const [showFullImage, setShowFullImage] = useState(false);
+
   const formatMessageTime = (dateStr) => {
     if (!dateStr) return '';
     const date = new Date(dateStr);
@@ -38,36 +40,135 @@ export const MessageBubble = ({ message, isMine }) => {
     );
   };
 
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 8, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.18, ease: 'easeOut' }}
-      className={`flex w-full mb-3 ${isMine ? 'justify-end' : 'justify-start'}`}
-    >
-      <div
-        className={`relative max-w-[82%] sm:max-w-[70%] md:max-w-[60%] px-4 py-2.5 rounded-2xl shadow-sm ${
-          isMine
-            ? 'bg-gradient-to-tr from-violet-600 to-indigo-600 text-white rounded-tr-xs border border-violet-400/20'
-            : 'bg-[#151e33] text-slate-100 rounded-tl-xs border border-slate-700/60'
-        }`}
-      >
-        {/* Message Content */}
-        <p className="text-sm leading-relaxed whitespace-pre-wrap break-words select-text">
-          {message.text}
-        </p>
+  // Determine if this message is an image message
+  const imageUrl =
+    message.image ||
+    message.mediaUrl ||
+    (typeof message.text === 'string' && message.text.startsWith('data:image/')
+      ? message.text
+      : null);
 
-        {/* Timestamp and delivery/read status */}
+  const captionText =
+    imageUrl && message.text && message.text !== imageUrl && message.text !== '📷 Photo'
+      ? message.text
+      : !imageUrl
+      ? message.text
+      : null;
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0, y: 8, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ duration: 0.18, ease: 'easeOut' }}
+        className={`flex w-full mb-3 ${isMine ? 'justify-end' : 'justify-start'}`}
+      >
         <div
-          className={`flex items-center justify-end gap-1.5 mt-1 select-none text-[10px] ${
-            isMine ? 'text-violet-200/90' : 'text-slate-400'
+          className={`relative max-w-[85%] sm:max-w-[75%] md:max-w-[62%] rounded-2xl shadow-md overflow-hidden ${
+            imageUrl ? 'p-1.5' : 'px-4 py-2.5'
+          } ${
+            isMine
+              ? 'bg-gradient-to-tr from-violet-600 to-indigo-600 text-white rounded-tr-xs border border-violet-400/20'
+              : 'bg-[#151e33] text-slate-100 rounded-tl-xs border border-slate-700/60'
           }`}
         >
-          <span>{formatMessageTime(message.createdAt)}</span>
-          {renderStatus()}
+          {/* Photo Render */}
+          {imageUrl && (
+            <div className="relative group cursor-pointer overflow-hidden rounded-xl">
+              <img
+                src={imageUrl}
+                alt="Chat attachment"
+                onClick={() => setShowFullImage(true)}
+                className="w-full max-h-[320px] object-cover rounded-xl transition-transform duration-200 group-hover:scale-[1.02]"
+              />
+
+              {/* Hover overlay hint */}
+              <div
+                onClick={() => setShowFullImage(true)}
+                className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white"
+              >
+                <span className="p-2 rounded-full bg-black/60 backdrop-blur-md">
+                  <Maximize2 className="w-4 h-4" />
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Optional Caption or Text Content */}
+          {captionText && (
+            <p
+              className={`text-sm leading-relaxed whitespace-pre-wrap break-words select-text ${
+                imageUrl ? 'px-2 pt-2' : ''
+              }`}
+            >
+              {captionText}
+            </p>
+          )}
+
+          {/* Timestamp and delivery/read status */}
+          <div
+            className={`flex items-center justify-end gap-1.5 select-none text-[10px] ${
+              imageUrl ? 'px-2 py-1' : 'mt-1'
+            } ${isMine ? 'text-violet-200/90' : 'text-slate-400'}`}
+          >
+            <span>{formatMessageTime(message.createdAt)}</span>
+            {renderStatus()}
+          </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+
+      {/* Full-Screen Image Lightbox Modal */}
+      {showFullImage && imageUrl && (
+        <div
+          onClick={() => setShowFullImage(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-lg animate-fade-in"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-4xl max-h-[90vh] flex flex-col items-center"
+          >
+            {/* Top Toolbar */}
+            <div className="w-full flex items-center justify-between pb-3 text-white">
+              <span className="text-xs text-slate-300 font-mono">
+                {formatMessageTime(message.createdAt)}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <a
+                  href={imageUrl}
+                  download={`veyra_photo_${Date.now()}.jpg`}
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                  title="Download photo"
+                >
+                  <Download className="w-4 h-4" />
+                </a>
+
+                <button
+                  onClick={() => setShowFullImage(false)}
+                  className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                  title="Close"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Expanded Image */}
+            <img
+              src={imageUrl}
+              alt="Enlarged chat photo"
+              className="max-w-full max-h-[80vh] object-contain rounded-2xl shadow-2xl border border-white/10"
+            />
+
+            {captionText && (
+              <p className="mt-3 px-4 py-2 rounded-xl bg-black/60 text-white text-sm max-w-lg text-center backdrop-blur-md">
+                {captionText}
+              </p>
+            )}
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

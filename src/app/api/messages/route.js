@@ -15,11 +15,14 @@ export async function POST(request) {
       );
     }
 
-    const { conversationId, recipientId, text } = await request.json();
+    const { conversationId, recipientId, text, image } = await request.json();
 
-    if (!text || !text.trim()) {
+    const hasText = text && text.trim().length > 0;
+    const hasImage = Boolean(image);
+
+    if (!hasText && !hasImage) {
       return NextResponse.json(
-        { success: false, message: 'Message text is required' },
+        { success: false, message: 'Message text or image is required' },
         { status: 400 }
       );
     }
@@ -77,7 +80,9 @@ export async function POST(request) {
       conversationId: targetConversation._id,
       sender: senderId,
       recipient: targetRecipientId,
-      text: text.trim(),
+      text: (text || '').trim(),
+      image: image || null,
+      mediaType: hasImage ? 'image' : 'text',
       status: 'sent',
     });
 

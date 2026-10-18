@@ -34,6 +34,13 @@ export async function GET(request) {
           (p) => p && p._id && p._id.toString() !== userId.toString()
         );
 
+        let lastMessage = conv.lastMessage || null;
+        if (!lastMessage) {
+          lastMessage = await Message.findOne({ conversationId: conv._id })
+            .sort({ createdAt: -1 })
+            .select('_id text sender recipient status createdAt');
+        }
+
         const unreadCount = await Message.countDocuments({
           conversationId: conv._id,
           recipient: userId,
@@ -44,8 +51,8 @@ export async function GET(request) {
           _id: conv._id,
           participants: conv.participants,
           participant: otherParticipant || null,
-          lastMessage: conv.lastMessage || null,
-          lastMessageAt: conv.lastMessageAt,
+          lastMessage,
+          lastMessageAt: conv.lastMessageAt || lastMessage?.createdAt || conv.updatedAt,
           unreadCount,
         };
       })
