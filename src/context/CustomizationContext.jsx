@@ -224,16 +224,10 @@ export const CustomizationProvider = ({ children }) => {
         setWallpaperDim(Number(savedDim));
       }
 
-      const savedIcon = localStorage.getItem('veyra_app_icon');
-      if (savedIcon) {
-        setAppIconState(savedIcon);
-      }
-
-      const savedCustomIcon = localStorage.getItem('veyra_custom_app_icon');
-      if (savedCustomIcon) {
-        setCustomAppIconState(savedCustomIcon);
-        updateFavicon(savedCustomIcon);
-      }
+      // Always enforce the permanent official app icon & favicon
+      updateFavicon('/images/iconlogo.jpeg');
+      localStorage.removeItem('veyra_custom_app_icon');
+      localStorage.removeItem('veyra_app_icon');
     } catch (e) {
       console.warn('Error reading saved customization preferences:', e);
     }
@@ -345,7 +339,7 @@ export const CustomizationProvider = ({ children }) => {
     }
   };
 
-  const updateFavicon = (iconSrc) => {
+  const updateFavicon = (iconSrc = '/images/iconlogo.jpeg') => {
     if (typeof window === 'undefined') return;
     try {
       let link = document.querySelector("link[rel*='icon']");
@@ -354,7 +348,7 @@ export const CustomizationProvider = ({ children }) => {
         link.rel = 'shortcut icon';
         document.getElementsByTagName('head')[0].appendChild(link);
       }
-      link.href = iconSrc;
+      link.href = '/images/iconlogo.jpeg';
     } catch (e) {
       console.warn('Could not update favicon:', e);
     }
