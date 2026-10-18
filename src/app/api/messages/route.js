@@ -111,3 +111,64 @@ export async function POST(request) {
     );
   }
 }
+
+/**
+ * DELETE /api/messages?messageId=xxx
+ * Delete an individual message
+ */
+export async function DELETE(request) {
+  try {
+    const currentUserId = getAuthUserId(request);
+    if (!currentUserId) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { searchParams } = new URL(request.url);
+    const messageId = searchParams.get('messageId');
+
+    if (!messageId) {
+      return NextResponse.json(
+        { success: false, message: 'Message ID is required' },
+        { status: 400 }
+      );
+    }
+
+    await connectDB();
+    const msg = await Message.findById(messageId);
+    if (!msg) {
+      return NextResponse.json(
+        { success: false, message: 'Message not found' },
+        { status: 404 }
+      );
+    }
+
+    // Sender or recipient can delete
+    const isParticipant =
+      msg.sender.toString() === currentUserId.toString() ||
+      msg.recipient?.toString() === currentUserId.toString();
+
+    if (!isParticipant) {
+      return NextResponse.json(
+        { success: false, message: 'Forbidden: You cannot delete this message' },
+        { status: 403 }
+      );
+    }
+
+    await Message.findByIdAndDelete(messageId);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Message deleted successfully',
+      deletedId: messageId,
+    });
+  } catch (error) {
+    console.error('[Veyra Delete Message Error]:', error);
+    return NextResponse.json(
+      { success: false, message: error.message },
+      { status: 500 }
+    );
+  }
+}

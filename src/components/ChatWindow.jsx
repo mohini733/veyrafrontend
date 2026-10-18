@@ -10,14 +10,19 @@ import {
   MessageSquare,
   Lock,
   Sparkles,
+  Edit3,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useCustomization, getWallpaperStyle } from '../context/CustomizationContext';
 import { getSocket } from '../lib/socket';
 import api from '../lib/api';
 import { playMessageSound } from '../lib/sound';
+import { getCustomContactName } from '../lib/contacts';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
+import EditContactModal from './EditContactModal';
+import DeleteChatModal from './DeleteChatModal';
 
 export const ChatWindow = ({ conversation, onBack }) => {
   const { user: currentUser } = useAuth();
@@ -36,6 +41,36 @@ export const ChatWindow = ({ conversation, onBack }) => {
     conversation?.participants?.find(
       (p) => p._id?.toString() !== currentUser?._id?.toString()
     ) || conversation?.participants?.[0];
+
+  const [displayName, setDisplayName] = useState(
+    partner ? getCustomContactName(partner._id, partner.name) : 'Veyra User'
+  );
+  const [isEditNameOpen, setIsEditNameOpen] = useState(false);
+  const [isDeleteChatOpen, setIsDeleteChatOpen] = useState(false);
+
+  useEffect(() => {
+    if (partner) {
+      setDisplayName(getCustomContactName(partner._id, partner.name));
+    }
+    const handleContactUpdate = () => {
+      if (partner) {
+        setDisplayName(getCustomContactName(partner._id, partner.name));
+      }
+    };
+    window.addEventListener('veyra_contact_updated', handleContactUpdate);
+    return () => {
+      window.removeEventListener('veyra_contact_updated', handleContactUpdate);
+    };
+  }, [partner]);
+
+  const handleDeleteMessage = async (messageId) => {
+    setMessages((prev) => prev.filter((m) => m._id !== messageId));
+    try {
+      await api.delete(`/messages?messageId=${messageId}`);
+    } catch (err) {
+      console.error('Failed to delete message:', err);
+    }
+  };
 
   const scrollToBottom = (behavior = 'smooth') => {
     messagesEndRef.current?.scrollIntoView({ behavior });
@@ -306,7 +341,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="font-semibold text-white text-sm truncate">
-                {partner?.name || 'Veyra User'}
+                {displayName}
               </span>
               {partner?.isPhoneVerified && (
                 <ShieldCheck
@@ -314,6 +349,13 @@ export const ChatWindow = ({ conversation, onBack }) => {
                   title="Phone Verified"
                 />
               )}
+              <button
+                onClick={() => setIsEditNameOpen(true)}
+                className="p-1 text-slate-400 hover:text-violet-300 hover:bg-violet-600/10 rounded-md transition-colors cursor-pointer"
+                title="Edit name"
+              >
+                <Edit3 className="w-3.5 h-3.5" />
+              </button>
             </div>
 
             <span className="text-xs text-slate-400 font-mono">
@@ -331,7 +373,21 @@ export const ChatWindow = ({ conversation, onBack }) => {
         </div>
 
         {/* Action icons */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setIsEditNameOpen(true)}
+            className="p-2 text-slate-400 hover:text-violet-300 hover:bg-violet-600/10 rounded-xl transition-colors cursor-pointer"
+            title="Edit contact name"
+          >
+            <Edit3 className="w-4 h-4" />
+          </button>
+          <button
+            onClick={() => setIsDeleteChatOpen(true)}
+            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-600/10 rounded-xl transition-colors cursor-pointer"
+            title="Delete conversation"
+          >
+            <Trash2 className="w-4 h-4" />
+          </button>
           <Link
             href={`/profile/${partner?._id || ''}`}
             className="p-2 text-slate-400 hover:text-violet-300 hover:bg-violet-600/10 rounded-xl transition-colors"
@@ -387,7 +443,14 @@ export const ChatWindow = ({ conversation, onBack }) => {
             const isMine =
               msg.sender?._id?.toString() === currentUser?._id?.toString() ||
               msg.sender?.toString() === currentUser?._id?.toString();
-            return <MessageBubble key={msg._id} message={msg} isMine={isMine} />;
+            return (
+              <MessageBubble
+                key={msg._id}
+                message={msg}
+                isMine={isMine}
+                onDelete={handleDeleteMessage}
+              />
+            );
           })
         )}
 
@@ -412,6 +475,34 @@ export const ChatWindow = ({ conversation, onBack }) => {
         onSendMessage={handleSendMessage}
         onTypingStart={handleTypingStart}
         onTypingStop={handleTypingStop}
+      />
+
+      {/* Edit Contact Name Modal */}
+      <EditContactModal
+        isOpen={isEditNameOpen}
+        onClose={() => setIsEditNameOpen(false)}
+        contactId={partner?._id}
+        currentName={partner?.name}
+        phone={partner?.phone}
+        onSaved={(newName) => {
+          setDisplayName(newName);
+        }}
+      />
+
+      {/* Delete Chat Confirmation Modal */}
+      <DeleteChatModal
+        isOpen={isDeleteChatOpen}
+        onClose={() => setIsDeleteChatOpen(false)}
+        conversationId={conversationId}
+        partnerName={displayName}
+        onDeleted={() => {
+          setMessages([]);
+          if (onBack) {
+            onBack();
+          } else {
+            window.location.href = '/chats';
+          }
+        }}
       />
     </div>
   );

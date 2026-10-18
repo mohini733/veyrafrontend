@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, CheckCheck, X, Download, Maximize2 } from 'lucide-react';
+import { Check, CheckCheck, X, Download, Maximize2, Trash2 } from 'lucide-react';
 
-export const MessageBubble = ({ message, isMine }) => {
+export const MessageBubble = ({ message, isMine, onDelete }) => {
   const [showFullImage, setShowFullImage] = useState(false);
 
   const formatMessageTime = (dateStr) => {
@@ -64,7 +64,7 @@ export const MessageBubble = ({ message, isMine }) => {
         className={`flex w-full mb-3 ${isMine ? 'justify-end' : 'justify-start'}`}
       >
         <div
-          className={`relative max-w-[85%] sm:max-w-[75%] md:max-w-[62%] rounded-2xl shadow-md overflow-hidden ${
+          className={`relative max-w-[85%] sm:max-w-[75%] md:max-w-[62%] rounded-2xl shadow-md overflow-hidden group/bubble ${
             imageUrl ? 'p-1.5' : 'px-4 py-2.5'
           } ${
             isMine
@@ -111,6 +111,19 @@ export const MessageBubble = ({ message, isMine }) => {
               imageUrl ? 'px-2 py-1' : 'mt-1'
             } ${isMine ? 'text-violet-200/90' : 'text-slate-400'}`}
           >
+            {onDelete && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(message._id);
+                }}
+                className="opacity-0 group-hover/bubble:opacity-100 hover:text-rose-400 p-0.5 rounded transition-opacity cursor-pointer mr-0.5"
+                title="Delete message"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            )}
             <span>{formatMessageTime(message.createdAt)}</span>
             {renderStatus()}
           </div>

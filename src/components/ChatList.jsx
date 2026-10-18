@@ -15,9 +15,14 @@ import {
   Sparkles,
   Loader2,
   UserCheck,
+  Edit3,
+  Trash2,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import api from '../lib/api';
+import { getCustomContactName } from '../lib/contacts';
+import EditContactModal from './EditContactModal';
+import DeleteChatModal from './DeleteChatModal';
 
 export const ChatList = ({
   conversations = [],
@@ -30,9 +35,19 @@ export const ChatList = ({
   const [contacts, setContacts] = useState([]);
   const [loadingContacts, setLoadingContacts] = useState(false);
   const [startingChatId, setStartingChatId] = useState(null);
+  const [customNamesTick, setCustomNamesTick] = useState(0);
+  const [editingContact, setEditingContact] = useState(null);
+  const [deletingConv, setDeletingConv] = useState(null);
   const { user: currentUser } = useAuth();
   const pathname = usePathname();
   const router = useRouter();
+
+  // Listen for custom contact name changes across the app
+  useEffect(() => {
+    const handleUpdate = () => setCustomNamesTick((t) => t + 1);
+    window.addEventListener('veyra_contact_updated', handleUpdate);
+    return () => window.removeEventListener('veyra_contact_updated', handleUpdate);
+  }, []);
 
   // Load registered contacts
   useEffect(() => {
@@ -101,13 +116,19 @@ export const ChatList = ({
   const filteredConversations = conversations.filter((c) => {
     const partner = getPartner(c);
     if (!partner) return false;
-    const matchName = partner.name?.toLowerCase().includes(filter.toLowerCase());
+    const displayName = getCustomContactName(partner._id, partner.name);
+    const matchName =
+      displayName?.toLowerCase().includes(filter.toLowerCase()) ||
+      partner.name?.toLowerCase().includes(filter.toLowerCase());
     const matchPhone = partner.phone?.includes(filter);
     return matchName || matchPhone;
   });
 
   const filteredContacts = contacts.filter((u) => {
-    const matchName = u.name?.toLowerCase().includes(filter.toLowerCase());
+    const displayName = getCustomContactName(u._id, u.name);
+    const matchName =
+      displayName?.toLowerCase().includes(filter.toLowerCase()) ||
+      u.name?.toLowerCase().includes(filter.toLowerCase());
     const matchPhone = u.phone?.includes(filter);
     return matchName || matchPhone;
   });
@@ -261,7 +282,7 @@ export const ChatList = ({
                             </div>
                             <div className="min-w-0">
                               <p className="text-xs font-semibold text-slate-200 truncate">
-                                {contact.name}
+                                {getCustomContactName(contact._id, contact.name)}
                               </p>
                               <p className="text-[10px] text-slate-400 font-mono">
                                 {contact.phone}
@@ -288,6 +309,7 @@ export const ChatList = ({
 
             {filteredConversations.map((conv) => {
               const partner = getPartner(conv);
+              const displayName = getCustomContactName(partner?._id, partner?.name);
               const isActive = pathname === `/chat/${conv._id}`;
               const lastMsg = conv.lastMessage;
               const isLastMsgMine =
@@ -299,7 +321,7 @@ export const ChatList = ({
                 <Link
                   key={conv._id}
                   href={`/chat/${conv._id}`}
-                  className={`flex items-center gap-3.5 p-3.5 transition-all duration-150 cursor-pointer ${
+                  className={`group flex items-center gap-3.5 p-3.5 transition-all duration-150 cursor-pointer ${
                     isActive
                       ? 'bg-violet-600/15 border-l-4 border-violet-500 shadow-inner'
                       : 'hover:bg-[#111827]/70'
@@ -312,7 +334,7 @@ export const ChatList = ({
                         partner?.avatar ||
                         `https://api.dicebear.com/7.x/identicon/svg?seed=${partner?.phone}`
                       }
-                      alt={partner?.name || 'User'}
+                      alt={displayName || 'User'}
                       className="w-12 h-12 rounded-full bg-slate-800 object-cover border border-violet-500/20"
                     />
                     {partner?.online && (
@@ -336,7 +358,7 @@ export const ChatList = ({
                               : 'text-slate-100'
                           }`}
                         >
-                          {partner?.name || 'Veyra Member'}
+                          {displayName || 'Veyra Member'}
                         </span>
                         {partner?.isPhoneVerified && (
                           <ShieldCheck
@@ -345,9 +367,43 @@ export const ChatList = ({
                           />
                         )}
                       </div>
-                      <span className="text-[11px] text-slate-400 shrink-0 font-mono">
-                        {formatTime(conv.lastMessageAt || conv.updatedAt)}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        {/* Quick action buttons on hover */}
+                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setEditingContact({
+                                id: partner?._id,
+                                name: partner?.name,
+                                phone: partner?.phone,
+                              });
+                            }}
+                            className="p-1 text-slate-400 hover:text-violet-300 hover:bg-violet-600/20 rounded-md transition-colors cursor-pointer"
+                            title="Edit contact name"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDeletingConv({
+                                id: conv._id,
+                                partnerName: displayName,
+                              });
+                            }}
+                            className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-600/20 rounded-md transition-colors cursor-pointer"
+                            title="Delete conversation"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                        <span className="text-[11px] text-slate-400 shrink-0 font-mono">
+                          {formatTime(conv.lastMessageAt || conv.updatedAt)}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -428,7 +484,7 @@ export const ChatList = ({
                   <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <span className="text-sm font-semibold text-slate-100 truncate group-hover:text-violet-300 transition-colors">
-                        {contact.name}
+                        {getCustomContactName(contact._id, contact.name)}
                       </span>
                       {contact.isPhoneVerified && (
                         <ShieldCheck
@@ -436,6 +492,20 @@ export const ChatList = ({
                           title="Verified Phone"
                         />
                       )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingContact({
+                            id: contact._id,
+                            name: contact.name,
+                            phone: contact.phone,
+                          });
+                        }}
+                        className="p-1 text-slate-400 hover:text-violet-300 hover:bg-violet-600/20 rounded-md transition-colors cursor-pointer"
+                        title="Edit name"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                      </button>
                     </div>
                     <p className="text-xs text-slate-400 font-mono">{contact.phone}</p>
                     <p className="text-[11px] text-slate-500 truncate max-w-[180px]">
@@ -459,6 +529,33 @@ export const ChatList = ({
           </div>
         )}
       </div>
+
+      {/* Edit Contact Modal */}
+      <EditContactModal
+        isOpen={Boolean(editingContact)}
+        onClose={() => setEditingContact(null)}
+        contactId={editingContact?.id}
+        currentName={editingContact?.name}
+        phone={editingContact?.phone}
+        onSaved={() => {
+          setCustomNamesTick((t) => t + 1);
+          if (onRefresh) onRefresh();
+        }}
+      />
+
+      {/* Delete Chat Modal */}
+      <DeleteChatModal
+        isOpen={Boolean(deletingConv)}
+        onClose={() => setDeletingConv(null)}
+        conversationId={deletingConv?.id}
+        partnerName={deletingConv?.partnerName}
+        onDeleted={() => {
+          if (pathname === `/chat/${deletingConv?.id}`) {
+            router.push('/chats');
+          }
+          if (onRefresh) onRefresh();
+        }}
+      />
     </div>
   );
 };

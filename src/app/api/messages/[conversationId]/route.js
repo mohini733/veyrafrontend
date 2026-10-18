@@ -72,3 +72,58 @@ export async function GET(request, { params }) {
     );
   }
 }
+
+/**
+ * DELETE /api/messages/[conversationId]
+ * Delete entire conversation and its messages
+ */
+export async function DELETE(request, { params }) {
+  try {
+    const currentUserId = getAuthUserId(request);
+    if (!currentUserId) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { conversationId } = await params;
+    await connectDB();
+
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return NextResponse.json(
+        { success: false, message: 'Conversation not found' },
+        { status: 404 }
+      );
+    }
+
+    const isParticipant = conversation.participants.some(
+      (p) => p && p.toString() === currentUserId.toString()
+    );
+
+    if (!isParticipant) {
+      return NextResponse.json(
+        { success: false, message: 'Forbidden: You are not a participant in this conversation' },
+        { status: 403 }
+      );
+    }
+
+    // Delete all messages belonging to this conversation
+    await Message.deleteMany({ conversationId });
+
+    // Delete the conversation document
+    await Conversation.findByIdAndDelete(conversationId);
+
+    return NextResponse.json({
+      success: true,
+      message: 'Conversation and all messages deleted successfully',
+    });
+  } catch (error) {
+    console.error('[Veyra Delete Conversation Error]:', error);
+    return NextResponse.json(
+      { success: false, message: error.message || 'Failed to delete conversation' },
+      { status: 500 }
+    );
+  }
+}
