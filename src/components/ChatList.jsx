@@ -367,43 +367,9 @@ export const ChatList = ({
                           />
                         )}
                       </div>
-                      <div className="flex items-center gap-1">
-                        {/* Quick action buttons on hover */}
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-0.5">
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setEditingContact({
-                                id: partner?._id,
-                                name: partner?.name,
-                                phone: partner?.phone,
-                              });
-                            }}
-                            className="p-1 text-slate-400 hover:text-violet-300 hover:bg-violet-600/20 rounded-md transition-colors cursor-pointer"
-                            title="Edit contact name"
-                          >
-                            <Edit3 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={(e) => {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setDeletingConv({
-                                id: conv._id,
-                                partnerName: displayName,
-                              });
-                            }}
-                            className="p-1 text-slate-400 hover:text-rose-400 hover:bg-rose-600/20 rounded-md transition-colors cursor-pointer"
-                            title="Delete conversation"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <span className="text-[11px] text-slate-400 shrink-0 font-mono">
-                          {formatTime(conv.lastMessageAt || conv.updatedAt)}
-                        </span>
-                      </div>
+                      <span className="text-[11px] text-slate-400 shrink-0 font-mono">
+                        {formatTime(conv.lastMessageAt || conv.updatedAt)}
+                      </span>
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -534,7 +500,8 @@ export const ChatList = ({
       <EditContactModal
         isOpen={Boolean(editingContact)}
         onClose={() => setEditingContact(null)}
-        contactId={editingContact?.id}
+        contact={editingContact}
+        contactId={editingContact?.id || editingContact?._id}
         currentName={editingContact?.name}
         phone={editingContact?.phone}
         onSaved={() => {

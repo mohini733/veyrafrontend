@@ -47,6 +47,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
   );
   const [isEditNameOpen, setIsEditNameOpen] = useState(false);
   const [isDeleteChatOpen, setIsDeleteChatOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   useEffect(() => {
     if (partner) {
@@ -349,13 +350,6 @@ export const ChatWindow = ({ conversation, onBack }) => {
                   title="Phone Verified"
                 />
               )}
-              <button
-                onClick={() => setIsEditNameOpen(true)}
-                className="p-1 text-slate-400 hover:text-violet-300 hover:bg-violet-600/10 rounded-md transition-colors cursor-pointer"
-                title="Edit name"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-              </button>
             </div>
 
             <span className="text-xs text-slate-400 font-mono">
@@ -372,29 +366,64 @@ export const ChatWindow = ({ conversation, onBack }) => {
           </div>
         </div>
 
-        {/* Action icons */}
-        <div className="flex items-center gap-1.5">
+        {/* Action: 3-dots Dropdown Menu */}
+        <div className="relative flex items-center">
           <button
-            onClick={() => setIsEditNameOpen(true)}
-            className="p-2 text-slate-400 hover:text-violet-300 hover:bg-violet-600/10 rounded-xl transition-colors cursor-pointer"
-            title="Edit contact name"
+            onClick={() => setIsMenuOpen((prev) => !prev)}
+            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-xl transition-colors cursor-pointer"
+            title="Chat Options"
+            aria-label="Chat Options"
           >
-            <Edit3 className="w-4 h-4" />
+            <MoreVertical className="w-5 h-5" />
           </button>
-          <button
-            onClick={() => setIsDeleteChatOpen(true)}
-            className="p-2 text-slate-400 hover:text-rose-400 hover:bg-rose-600/10 rounded-xl transition-colors cursor-pointer"
-            title="Delete conversation"
-          >
-            <Trash2 className="w-4 h-4" />
-          </button>
-          <Link
-            href={`/profile/${partner?._id || ''}`}
-            className="p-2 text-slate-400 hover:text-violet-300 hover:bg-violet-600/10 rounded-xl transition-colors"
-            title="View partner profile"
-          >
-            <ShieldCheck className="w-5 h-5" />
-          </Link>
+
+          {isMenuOpen && (
+            <>
+              {/* Click outside backdrop */}
+              <div
+                className="fixed inset-0 z-40"
+                onClick={() => setIsMenuOpen(false)}
+              />
+
+              {/* Dropdown Card */}
+              <div className="absolute right-0 top-full mt-2 w-52 bg-[#0c1220]/95 backdrop-blur-xl border border-violet-500/30 rounded-2xl shadow-2xl shadow-black/80 p-1.5 z-50 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-100">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsEditNameOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-200 hover:text-white hover:bg-violet-600/20 transition-colors cursor-pointer text-left"
+                >
+                  <Edit3 className="w-4 h-4 text-violet-400 shrink-0" />
+                  <span>Edit Contact Name</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsDeleteChatOpen(true);
+                  }}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 transition-colors cursor-pointer text-left"
+                >
+                  <Trash2 className="w-4 h-4 text-rose-400 shrink-0" />
+                  <span>Delete Chat</span>
+                </button>
+
+                <div className="h-px bg-slate-800/80 my-0.5" />
+
+                <Link
+                  href={`/profile/${partner?._id || ''}`}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-colors text-left"
+                >
+                  <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
+                  <span>View Profile</span>
+                </Link>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
@@ -481,9 +510,11 @@ export const ChatWindow = ({ conversation, onBack }) => {
       <EditContactModal
         isOpen={isEditNameOpen}
         onClose={() => setIsEditNameOpen(false)}
+        contact={partner}
         contactId={partner?._id}
         currentName={partner?.name}
         phone={partner?.phone}
+        avatar={partner?.avatar}
         onSaved={(newName) => {
           setDisplayName(newName);
         }}
