@@ -12,6 +12,7 @@ import {
   Sparkles,
   Edit3,
   Trash2,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useCustomization, getWallpaperStyle } from '../context/CustomizationContext';
@@ -19,11 +20,13 @@ import { getSocket } from '../lib/socket';
 import api from '../lib/api';
 import { playMessageSound } from '../lib/sound';
 import { getCustomContactName } from '../lib/contacts';
+import { getPersonalWallpaper } from '../lib/personalWallpaper';
 import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import EditContactModal from './EditContactModal';
 import DeleteChatModal from './DeleteChatModal';
 import ContactProfileModal from './ContactProfileModal';
+import ChatWallpaperModal from './ChatWallpaperModal';
 
 export const ChatWindow = ({ conversation, onBack }) => {
   const { user: currentUser } = useAuth();
@@ -50,10 +53,36 @@ export const ChatWindow = ({ conversation, onBack }) => {
   const [isEditNameOpen, setIsEditNameOpen] = useState(false);
   const [isDeleteChatOpen, setIsDeleteChatOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isWallpaperModalOpen, setIsWallpaperModalOpen] = useState(false);
+  const [personalWallpaper, setPersonalWallpaper] = useState(null);
 
   useEffect(() => {
     setIsMenuOpen(false);
   }, [conversationId]);
+
+  useEffect(() => {
+    const currentWp = getPersonalWallpaper(partner?._id, conversationId);
+    setPersonalWallpaper(currentWp);
+
+    const handleWallpaperUpdate = () => {
+      setPersonalWallpaper(getPersonalWallpaper(partner?._id, conversationId));
+    };
+
+    window.addEventListener('veyra_personal_wallpaper_updated', handleWallpaperUpdate);
+    return () => {
+      window.removeEventListener('veyra_personal_wallpaper_updated', handleWallpaperUpdate);
+    };
+  }, [partner?._id, conversationId]);
+
+  // Compute active wallpaper: personal wallpaper for this chat takes priority over global wallpaper
+  const activeWallpaper =
+    personalWallpaper && personalWallpaper.wallpaper !== undefined
+      ? personalWallpaper.wallpaper
+      : wallpaper;
+  const activeWallpaperDim =
+    personalWallpaper && personalWallpaper.dim !== undefined
+      ? personalWallpaper.dim
+      : (wallpaperDim || 35);
 
   useEffect(() => {
     if (partner) {
@@ -468,6 +497,27 @@ export const ChatWindow = ({ conversation, onBack }) => {
               </div>
             </button>
 
+            {/* Chat Wallpaper */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                setIsWallpaperModalOpen(true);
+              }}
+              className="w-full px-3.5 py-2.5 text-left text-xs font-medium text-slate-200 hover:text-white hover:bg-violet-600/20 rounded-xl flex items-center gap-3 transition-colors cursor-pointer group"
+            >
+              <div className="p-1.5 rounded-lg bg-violet-600/20 text-violet-400 group-hover:bg-violet-600 group-hover:text-white transition-colors shrink-0">
+                <ImageIcon className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-semibold text-slate-100 group-hover:text-white text-xs">
+                  Chat Wallpaper
+                </div>
+                <div className="text-[10px] text-slate-400 truncate">
+                  Personal background for this chat
+                </div>
+              </div>
+            </button>
+
             {/* View Profile */}
             <button
               onClick={() => {
@@ -495,15 +545,15 @@ export const ChatWindow = ({ conversation, onBack }) => {
       {/* Messages Scroll Area with Wallpaper */}
       <div className="flex-1 relative overflow-hidden flex flex-col min-h-0 bg-[#090d16]">
         {/* Fixed Wallpaper Layer */}
-        {wallpaper ? (
+        {activeWallpaper ? (
           <>
             <div
               className="absolute inset-0 pointer-events-none transition-all duration-300"
-              style={getWallpaperStyle(wallpaper, wallpaperDim).style}
+              style={getWallpaperStyle(activeWallpaper, activeWallpaperDim).style}
             />
             <div
               className="absolute inset-0 pointer-events-none transition-all duration-300"
-              style={getWallpaperStyle(wallpaper, wallpaperDim).dimStyle}
+              style={getWallpaperStyle(activeWallpaper, activeWallpaperDim).dimStyle}
             />
           </>
         ) : null}
@@ -609,6 +659,16 @@ export const ChatWindow = ({ conversation, onBack }) => {
         displayName={displayName}
         onEditName={() => setIsEditNameOpen(true)}
         onDeleteChat={() => setIsDeleteChatOpen(true)}
+        onOpenWallpaper={() => setIsWallpaperModalOpen(true)}
+      />
+
+      {/* Personal Chat Wallpaper Modal (WhatsApp style) */}
+      <ChatWallpaperModal
+        isOpen={isWallpaperModalOpen}
+        onClose={() => setIsWallpaperModalOpen(false)}
+        partner={partner}
+        conversationId={conversationId}
+        displayName={displayName}
       />
     </div>
   );

@@ -14,7 +14,9 @@ import {
   Calendar,
   Sparkles,
   ExternalLink,
+  Image as ImageIcon,
 } from 'lucide-react';
+import { getPersonalWallpaper } from '../lib/personalWallpaper';
 
 export const ContactProfileModal = ({
   isOpen,
@@ -23,10 +25,13 @@ export const ContactProfileModal = ({
   displayName,
   onEditName,
   onDeleteChat,
+  onOpenWallpaper,
 }) => {
   const [copied, setCopied] = useState(false);
 
   if (!isOpen || !partner) return null;
+
+  const personalWp = getPersonalWallpaper(partner?._id);
 
   const handleCopyPhone = () => {
     if (!partner?.phone) return;
@@ -104,7 +109,7 @@ export const ContactProfileModal = ({
           </p>
 
           {/* Action pills */}
-          <div className="grid grid-cols-2 gap-2 mb-5">
+          <div className="grid grid-cols-3 gap-2 mb-5">
             <button
               onClick={() => {
                 onClose();
@@ -114,6 +119,17 @@ export const ContactProfileModal = ({
             >
               <Edit3 className="w-3.5 h-3.5 text-violet-400" />
               <span>Edit Name</span>
+            </button>
+
+            <button
+              onClick={() => {
+                onClose();
+                if (onOpenWallpaper) onOpenWallpaper();
+              }}
+              className="p-2.5 rounded-xl bg-violet-600/15 hover:bg-violet-600/25 text-violet-300 hover:text-white border border-violet-500/30 text-xs font-semibold flex items-center justify-center gap-1.5 transition-all cursor-pointer"
+            >
+              <ImageIcon className="w-3.5 h-3.5 text-violet-400" />
+              <span>Wallpaper</span>
             </button>
 
             <button
@@ -157,6 +173,25 @@ export const ContactProfileModal = ({
               <span className="text-slate-300 block text-xs mt-0.5">
                 {partner.about || 'Available on Veyra Chat'}
               </span>
+            </div>
+
+            {/* Personal Wallpaper row */}
+            <div className="flex items-center justify-between py-1 border-b border-slate-800/80">
+              <div className="min-w-0 pr-2">
+                <span className="text-[10px] uppercase font-bold text-slate-500 block">Personal Wallpaper</span>
+                <span className="text-slate-300 block text-xs mt-0.5 truncate">
+                  {personalWp ? 'Custom personal wallpaper active' : 'Default app wallpaper'}
+                </span>
+              </div>
+              <button
+                onClick={() => {
+                  onClose();
+                  if (onOpenWallpaper) onOpenWallpaper();
+                }}
+                className="px-2.5 py-1 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 text-violet-300 text-[11px] font-semibold border border-violet-500/30 transition-colors cursor-pointer shrink-0"
+              >
+                Change
+              </button>
             </div>
 
             {/* Full profile link */}
