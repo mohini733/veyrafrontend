@@ -23,6 +23,7 @@ import MessageBubble from './MessageBubble';
 import MessageInput from './MessageInput';
 import EditContactModal from './EditContactModal';
 import DeleteChatModal from './DeleteChatModal';
+import ContactProfileModal from './ContactProfileModal';
 
 export const ChatWindow = ({ conversation, onBack }) => {
   const { user: currentUser } = useAuth();
@@ -48,6 +49,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditNameOpen, setIsEditNameOpen] = useState(false);
   const [isDeleteChatOpen, setIsDeleteChatOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   useEffect(() => {
     setIsMenuOpen(false);
@@ -318,10 +320,17 @@ export const ChatWindow = ({ conversation, onBack }) => {
     <div className="flex-1 flex flex-col h-full min-h-0 bg-[#090d16] overflow-hidden">
       {/* Top Header */}
       <div className="h-16 px-4 border-b border-slate-800/80 bg-[#0c1220]/95 flex items-center justify-between shrink-0 backdrop-blur-md relative z-30">
-        <div className="flex items-center gap-3 min-w-0">
+        <div
+          onClick={() => setIsProfileModalOpen(true)}
+          className="flex items-center gap-3 min-w-0 cursor-pointer group/header hover:opacity-90 transition-opacity"
+          title="Click to view contact profile"
+        >
           {onBack && (
             <button
-              onClick={onBack}
+              onClick={(e) => {
+                e.stopPropagation();
+                onBack();
+              }}
               className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors shrink-0"
               title="Back to conversations"
             >
@@ -336,7 +345,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
                 `https://api.dicebear.com/7.x/identicon/svg?seed=${partner?.phone}`
               }
               alt={displayName || 'Contact'}
-              className="w-10 h-10 rounded-full bg-slate-800 object-cover border border-violet-500/30"
+              className="w-10 h-10 rounded-full bg-slate-800 object-cover border border-violet-500/30 group-hover/header:border-violet-400 transition-colors"
             />
             {partner?.online && (
               <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-500 border-2 border-[#0c1220]" />
@@ -345,7 +354,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
 
           <div className="flex flex-col min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-semibold text-white text-sm truncate">
+              <span className="font-semibold text-white text-sm truncate group-hover/header:text-violet-300 transition-colors">
                 {displayName}
               </span>
               {partner?.isPhoneVerified && (
@@ -460,10 +469,12 @@ export const ChatWindow = ({ conversation, onBack }) => {
             </button>
 
             {/* View Profile */}
-            <Link
-              href={`/profile/${partner?._id || ''}`}
-              onClick={() => setIsMenuOpen(false)}
-              className="w-full px-3.5 py-2.5 text-left text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl flex items-center gap-3 transition-colors group"
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                setIsProfileModalOpen(true);
+              }}
+              className="w-full px-3.5 py-2.5 text-left text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl flex items-center gap-3 transition-colors cursor-pointer group"
             >
               <div className="p-1.5 rounded-lg bg-slate-800 text-slate-400 group-hover:text-violet-400 transition-colors shrink-0">
                 <ShieldCheck className="w-4 h-4" />
@@ -476,7 +487,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
                   Member info & verification
                 </div>
               </div>
-            </Link>
+            </button>
           </div>
         </div>
       )}
@@ -588,6 +599,16 @@ export const ChatWindow = ({ conversation, onBack }) => {
             window.location.href = '/chats';
           }
         }}
+      />
+
+      {/* Contact Profile Modal */}
+      <ContactProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        partner={partner}
+        displayName={displayName}
+        onEditName={() => setIsEditNameOpen(true)}
+        onDeleteChat={() => setIsDeleteChatOpen(true)}
       />
     </div>
   );
