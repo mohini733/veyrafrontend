@@ -313,7 +313,7 @@ export const ChatWindow = ({ conversation, onBack }) => {
   return (
     <div className="flex-1 flex flex-col h-full min-h-0 bg-[#090d16] overflow-hidden">
       {/* Top Header */}
-      <div className="h-16 px-4 border-b border-slate-800/80 bg-[#0c1220]/90 flex items-center justify-between shrink-0 backdrop-blur-md z-10">
+      <div className="h-16 px-4 border-b border-slate-800/80 bg-[#0c1220]/95 flex items-center justify-between shrink-0 backdrop-blur-md z-30 relative">
         <div className="flex items-center gap-3">
           {onBack && (
             <button
@@ -366,61 +366,77 @@ export const ChatWindow = ({ conversation, onBack }) => {
           </div>
         </div>
 
-        {/* Action: 3-dots Dropdown Menu */}
-        <div className="relative flex items-center">
+        {/* 3-Dots Action Menu */}
+        <div className="relative">
           <button
             onClick={() => setIsMenuOpen((prev) => !prev)}
-            className="p-2 text-slate-400 hover:text-white hover:bg-slate-800/80 rounded-xl transition-colors cursor-pointer"
-            title="Chat Options"
-            aria-label="Chat Options"
+            className={`p-2 rounded-xl transition-all cursor-pointer ${
+              isMenuOpen
+                ? 'bg-violet-600/30 text-violet-300 ring-1 ring-violet-500/50'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/80 active:scale-95'
+            }`}
+            title="Chat options"
           >
             <MoreVertical className="w-5 h-5" />
           </button>
 
           {isMenuOpen && (
             <>
-              {/* Click outside backdrop */}
+              {/* Full Chat Blur Backdrop Overlay */}
               <div
-                className="fixed inset-0 z-40"
                 onClick={() => setIsMenuOpen(false)}
+                className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in"
               />
 
-              {/* Dropdown Card */}
-              <div className="absolute right-0 top-full mt-2 w-52 bg-[#0c1220]/95 backdrop-blur-xl border border-violet-500/30 rounded-2xl shadow-2xl shadow-black/80 p-1.5 z-50 flex flex-col gap-1 animate-in fade-in zoom-in-95 duration-100">
+              {/* Elevated Dark Dropdown Menu */}
+              <div
+                className="absolute right-0 top-12 z-50 w-56 bg-[#0c1220] border border-slate-700/90 rounded-2xl shadow-2xl shadow-black/95 p-1.5 space-y-1 select-none animate-in fade-in zoom-in-95 duration-150 origin-top-right"
+              >
+                {/* Contact Preview in Menu */}
+                <div className="px-3 py-2 border-b border-slate-800/80 mb-1">
+                  <p className="text-xs font-semibold text-white truncate">{displayName}</p>
+                  {partner?.phone && (
+                    <p className="text-[11px] text-slate-400 font-mono mt-0.5">{partner?.phone}</p>
+                  )}
+                </div>
+
+                {/* Edit Contact Name */}
                 <button
                   type="button"
                   onClick={() => {
                     setIsMenuOpen(false);
                     setIsEditNameOpen(true);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-200 hover:text-white hover:bg-violet-600/20 transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-200 hover:text-white hover:bg-violet-600/20 hover:border-violet-500/30 border border-transparent transition-all cursor-pointer group text-left"
                 >
-                  <Edit3 className="w-4 h-4 text-violet-400 shrink-0" />
+                  <Edit3 className="w-4 h-4 text-violet-400 group-hover:scale-110 transition-transform" />
                   <span>Edit Contact Name</span>
                 </button>
 
+                {/* View Profile */}
+                <Link
+                  href={`/profile/${partner?._id || ''}`}
+                  onClick={() => setIsMenuOpen(false)}
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-800/70 border border-transparent transition-all cursor-pointer group text-left"
+                >
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
+                  <span>View Profile</span>
+                </Link>
+
+                <div className="my-1 border-t border-slate-800/80" />
+
+                {/* Delete Chat */}
                 <button
                   type="button"
                   onClick={() => {
                     setIsMenuOpen(false);
                     setIsDeleteChatOpen(true);
                   }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 transition-colors cursor-pointer text-left"
+                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-rose-400 hover:text-rose-200 hover:bg-rose-600/20 hover:border-rose-500/30 border border-transparent transition-all cursor-pointer group text-left"
                 >
-                  <Trash2 className="w-4 h-4 text-rose-400 shrink-0" />
+                  <Trash2 className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
                   <span>Delete Chat</span>
                 </button>
-
-                <div className="h-px bg-slate-800/80 my-0.5" />
-
-                <Link
-                  href={`/profile/${partner?._id || ''}`}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-semibold text-slate-400 hover:text-slate-200 hover:bg-slate-800/50 transition-colors text-left"
-                >
-                  <ShieldCheck className="w-4 h-4 text-slate-400 shrink-0" />
-                  <span>View Profile</span>
-                </Link>
               </div>
             </>
           )}
@@ -516,6 +532,9 @@ export const ChatWindow = ({ conversation, onBack }) => {
         phone={partner?.phone}
         avatar={partner?.avatar}
         onSaved={(newName) => {
+          setDisplayName(newName);
+        }}
+        onUpdated={(newName) => {
           setDisplayName(newName);
         }}
       />

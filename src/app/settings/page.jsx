@@ -467,41 +467,110 @@ export default function SettingsPage() {
           </div>
 
           {/* App Icon & Branding Customization */}
-          {/* Official App Icon & Branding (Fixed & Locked) */}
           <div className="p-6 rounded-3xl bg-[#0c1220] border border-slate-800 shadow-md">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
                 <Smartphone className="w-5 h-5 text-violet-400" />
-                <h2 className="text-base font-bold text-white">Official App Icon & Branding</h2>
+                <h2 className="text-base font-bold text-white">App Icon & Branding</h2>
               </div>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-violet-600/20 text-violet-300 border border-violet-500/30 text-xs font-semibold">
-                <ShieldCheck className="w-3.5 h-3.5 text-violet-400" />
-                Official & Locked
-              </span>
+              {(customAppIcon || appIcon !== 'violet') && (
+                <button
+                  type="button"
+                  onClick={() => setAppIcon('violet')}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] text-slate-400 hover:text-violet-300 hover:bg-violet-600/10 transition-colors cursor-pointer"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  <span>Reset to Default</span>
+                </button>
+              )}
             </div>
             <p className="text-xs text-slate-400 mb-4">
-              This is the official fixed Veyra Chat icon. When downloaded or installed to mobile home screens and desktops, this icon is permanently locked.
+              Select or upload a custom app icon from your gallery to personalize sidebar and browser branding.
             </p>
 
-            <div className="flex items-center gap-4 p-4 rounded-2xl bg-[#090d16] border border-slate-800">
-              <div className="relative shrink-0">
-                <img
-                  src="/images/iconlogo.jpeg"
-                  alt="Official Veyra App Icon"
-                  className="w-16 h-16 rounded-2xl object-cover border-2 border-violet-500/40 shadow-lg shadow-violet-900/40 bg-slate-800"
-                />
-                <span className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#090d16]" />
+            {/* Hidden file input for app icon */}
+            <input
+              type="file"
+              ref={appIconInputRef}
+              onChange={handleAppIconUpload}
+              accept="image/*"
+              className="hidden"
+            />
+
+            {appIconFeedback && (
+              <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs">
+                {appIconFeedback}
               </div>
-              <div>
-                <h4 className="text-sm font-bold text-white flex items-center gap-2">
-                  Veyra Chat Official Icon
-                  <span className="text-[10px] px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-400 font-mono font-bold">
-                    PERMANENT
+            )}
+
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              {/* Custom gallery upload box */}
+              <button
+                type="button"
+                onClick={() => appIconInputRef.current?.click()}
+                className="w-full sm:w-auto flex-1 p-4 rounded-2xl border-2 border-dashed border-slate-700 hover:border-violet-500 bg-[#090d16]/70 hover:bg-violet-600/5 flex items-center gap-3 transition-all cursor-pointer group"
+              >
+                <div className="w-12 h-12 rounded-2xl bg-violet-600/15 border border-violet-500/30 flex items-center justify-center text-violet-400 shrink-0 group-hover:scale-105 transition-transform">
+                  <Upload className="w-5 h-5" />
+                </div>
+                <div className="text-left">
+                  <span className="text-xs font-bold text-white block">Upload Icon from Gallery</span>
+                  <span className="text-[11px] text-slate-400 block">
+                    Use any logo, PNG, or photo as app icon
                   </span>
-                </h4>
-                <p className="text-xs text-slate-400 mt-1">
-                  Universal app icon applied to browser tab (favicon), PWA homescreen download, and application headers.
-                </p>
+                </div>
+              </button>
+
+              {/* Current Icon Preview */}
+              <div className="p-3.5 rounded-2xl bg-[#090d16] border border-slate-800 flex items-center gap-3 shrink-0">
+                <span className="text-xs text-slate-400">Current Icon:</span>
+                {customAppIcon ? (
+                  <img
+                    src={customAppIcon}
+                    alt="Active Icon"
+                    className="w-10 h-10 rounded-2xl object-cover border border-violet-500/40 shadow-md shadow-violet-900/30"
+                  />
+                ) : (
+                  <div
+                    className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${
+                      APP_ICON_PRESETS.find((p) => p.id === appIcon)?.gradient ||
+                      'from-violet-600 to-indigo-600'
+                    } flex items-center justify-center text-white shadow-md shadow-violet-900/30`}
+                  >
+                    <MessageSquare className="w-5 h-5" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Icon Presets */}
+            <div className="mt-4 pt-4 border-t border-slate-800">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-2.5">
+                Preset App Icons:
+              </span>
+              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                {APP_ICON_PRESETS.map((preset) => {
+                  const isSelected = !customAppIcon && appIcon === preset.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => setAppIcon(preset.id)}
+                      className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
+                        isSelected
+                          ? 'border-violet-500 bg-violet-600/20 text-white font-bold ring-1 ring-violet-500'
+                          : 'border-slate-800 bg-[#090d16] text-slate-400 hover:text-white'
+                      }`}
+                    >
+                      <div
+                        className={`w-8 h-8 rounded-xl bg-gradient-to-tr ${preset.gradient} flex items-center justify-center text-white shadow-sm`}
+                      >
+                        <MessageSquare className="w-4 h-4" />
+                      </div>
+                      <span className="text-[11px] truncate w-full text-center">{preset.name}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>

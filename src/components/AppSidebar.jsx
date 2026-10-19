@@ -82,11 +82,19 @@ export const AppSidebar = ({ onOpenSearch }) => {
             className="flex items-center gap-3 px-1 md:px-2 group"
             title="Veyra Chat"
           >
-            <img
-              src="/images/iconlogo.jpeg"
-              alt="Veyra Logo"
-              className="w-11 h-11 rounded-2xl object-cover shadow-md shadow-violet-600/30 group-hover:scale-105 transition-all border border-violet-500/30 bg-slate-800"
-            />
+            {customAppIcon ? (
+              <img
+                src={customAppIcon}
+                alt="Veyra Logo"
+                className="w-11 h-11 rounded-2xl object-cover shadow-md shadow-violet-600/30 group-hover:scale-105 transition-all border border-violet-500/30"
+              />
+            ) : (
+              <div
+                className={`flex items-center justify-center w-11 h-11 rounded-2xl bg-gradient-to-tr ${activeIconPreset.gradient} shadow-md shadow-violet-600/30 group-hover:scale-105 transition-all`}
+              >
+                <MessageSquare className="w-6 h-6 text-white" />
+              </div>
+            )}
             <div className="hidden lg:flex flex-col">
               <span className="font-extrabold text-lg tracking-tight bg-gradient-to-r from-white via-slate-100 to-violet-300 bg-clip-text text-transparent">
                 Veyra<span className="text-violet-400">Chat</span>

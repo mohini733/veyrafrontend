@@ -63,12 +63,8 @@ function LoginForm() {
         {/* Logo and title */}
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-3 group">
-            <div className="flex items-center justify-center w-12 h-12 rounded-2xl overflow-hidden shadow-lg shadow-violet-600/30 group-hover:scale-105 transition-all border border-violet-500/30 bg-slate-800 shrink-0">
-              <img
-                src="/images/iconlogo.jpeg"
-                alt="Veyra Logo"
-                className="w-full h-full object-cover"
-              />
+            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-gradient-to-tr from-violet-600 to-indigo-600 shadow-lg shadow-violet-600/30 group-hover:scale-105 transition-all">
+              <MessageSquare className="w-6 h-6 text-white" />
             </div>
             <span className="text-2xl font-black tracking-tight text-white">
               Veyra<span className="text-violet-400">Chat</span>

@@ -458,20 +458,6 @@ export const ChatList = ({
                           title="Verified Phone"
                         />
                       )}
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setEditingContact({
-                            id: contact._id,
-                            name: contact.name,
-                            phone: contact.phone,
-                          });
-                        }}
-                        className="p-1 text-slate-400 hover:text-violet-300 hover:bg-violet-600/20 rounded-md transition-colors cursor-pointer"
-                        title="Edit name"
-                      >
-                        <Edit3 className="w-3 h-3" />
-                      </button>
                     </div>
                     <p className="text-xs text-slate-400 font-mono">{contact.phone}</p>
                     <p className="text-[11px] text-slate-500 truncate max-w-[180px]">
@@ -505,6 +491,10 @@ export const ChatList = ({
         currentName={editingContact?.name}
         phone={editingContact?.phone}
         onSaved={() => {
+          setCustomNamesTick((t) => t + 1);
+          if (onRefresh) onRefresh();
+        }}
+        onUpdated={() => {
           setCustomNamesTick((t) => t + 1);
           if (onRefresh) onRefresh();
         }}
