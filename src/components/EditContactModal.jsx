@@ -8,16 +8,21 @@ export const EditContactModal = ({
   isOpen,
   onClose,
   contact,
-  contactId: propContactId,
-  currentName: propCurrentName,
+  contactId,
+  currentName,
+  name,
   phone: propPhone,
   avatar: propAvatar,
-  onUpdated,
   onSaved,
+  onUpdated,
 }) => {
-  const contactId = (contact?._id || contact?.id || propContactId)?.toString();
-  const originalName = contact?.name || propCurrentName || 'Veyra Member';
+  const targetId =
+    contact?._id?.toString() ||
+    contact?.id?.toString() ||
+    contactId?.toString();
+
   const phone = contact?.phone || propPhone || '';
+  const originalName = contact?.name || currentName || name || 'Veyra Member';
   const avatar =
     contact?.avatar ||
     propAvatar ||
@@ -26,42 +31,34 @@ export const EditContactModal = ({
   const [customName, setCustomName] = useState('');
 
   useEffect(() => {
-    if (isOpen && contactId) {
-      const saved = getCustomContactName(contactId, '');
-      setCustomName(saved || originalName);
+    if (isOpen) {
+      const existing = getCustomContactName(targetId, originalName, phone);
+      setCustomName(existing || originalName);
     }
-  }, [isOpen, contactId, originalName]);
+  }, [isOpen, targetId, originalName, phone]);
 
   if (!isOpen) return null;
 
   const handleSave = (e) => {
-    e?.preventDefault();
-    if (!contactId) {
-      onClose();
-      return;
-    }
-    const finalName = customName.trim();
-    setCustomContactName(contactId, finalName);
-    if (onUpdated) onUpdated(finalName || originalName);
-    if (onSaved) onSaved(finalName || originalName);
+    e.preventDefault();
+    const finalName = customName && customName.trim() ? customName.trim() : originalName;
+    setCustomContactName(targetId, finalName, phone);
+    if (onSaved) onSaved(finalName);
+    if (onUpdated) onUpdated(finalName);
     onClose();
   };
 
   const handleReset = () => {
-    if (!contactId) {
-      onClose();
-      return;
-    }
-    setCustomContactName(contactId, null);
+    setCustomContactName(targetId, null, phone);
     setCustomName(originalName);
-    if (onUpdated) onUpdated(originalName);
     if (onSaved) onSaved(originalName);
+    if (onUpdated) onUpdated(originalName);
     onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md select-none">
-      <div className="relative w-full max-w-md bg-[#0f172a] border border-violet-500/30 rounded-3xl shadow-2xl shadow-violet-950/60 overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-150 select-none">
+      <div className="relative w-full max-w-md bg-[#0f172a] border border-violet-500/30 rounded-3xl shadow-2xl shadow-violet-950/80 overflow-hidden flex flex-col animate-in zoom-in-95 duration-150">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800 bg-[#131c31]/60">
           <div className="flex items-center gap-2.5">
@@ -88,7 +85,7 @@ export const EditContactModal = ({
             <img
               src={avatar}
               alt={originalName}
-              className="w-12 h-12 rounded-full object-cover border border-violet-500/20 shrink-0"
+              className="w-12 h-12 rounded-full object-cover border border-violet-500/20 shrink-0 bg-slate-800"
             />
             <div className="min-w-0">
               <p className="text-xs text-slate-400">Registered Name:</p>
@@ -113,7 +110,7 @@ export const EditContactModal = ({
               />
             </div>
             <p className="text-[11px] text-slate-400 mt-1">
-              This custom name will be saved and visible to you across all chats and contacts.
+              This custom name will be visible to you across all your chats and contacts list.
             </p>
           </div>
 

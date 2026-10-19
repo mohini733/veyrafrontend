@@ -116,7 +116,7 @@ export const ChatList = ({
   const filteredConversations = conversations.filter((c) => {
     const partner = getPartner(c);
     if (!partner) return false;
-    const displayName = getCustomContactName(partner._id, partner.name);
+    const displayName = getCustomContactName(partner._id, partner.name, partner.phone);
     const matchName =
       displayName?.toLowerCase().includes(filter.toLowerCase()) ||
       partner.name?.toLowerCase().includes(filter.toLowerCase());
@@ -125,7 +125,7 @@ export const ChatList = ({
   });
 
   const filteredContacts = contacts.filter((u) => {
-    const displayName = getCustomContactName(u._id, u.name);
+    const displayName = getCustomContactName(u._id, u.name, u.phone);
     const matchName =
       displayName?.toLowerCase().includes(filter.toLowerCase()) ||
       u.name?.toLowerCase().includes(filter.toLowerCase());
@@ -282,7 +282,7 @@ export const ChatList = ({
                             </div>
                             <div className="min-w-0">
                               <p className="text-xs font-semibold text-slate-200 truncate">
-                                {getCustomContactName(contact._id, contact.name)}
+                                {getCustomContactName(contact._id, contact.name, contact.phone)}
                               </p>
                               <p className="text-[10px] text-slate-400 font-mono">
                                 {contact.phone}
@@ -309,7 +309,7 @@ export const ChatList = ({
 
             {filteredConversations.map((conv) => {
               const partner = getPartner(conv);
-              const displayName = getCustomContactName(partner?._id, partner?.name);
+              const displayName = getCustomContactName(partner?._id, partner?.name, partner?.phone);
               const isActive = pathname === `/chat/${conv._id}`;
               const lastMsg = conv.lastMessage;
               const isLastMsgMine =
@@ -321,7 +321,7 @@ export const ChatList = ({
                 <Link
                   key={conv._id}
                   href={`/chat/${conv._id}`}
-                  className={`group flex items-center gap-3.5 p-3.5 transition-all duration-150 cursor-pointer ${
+                  className={`flex items-center gap-3.5 p-3.5 transition-all duration-150 cursor-pointer ${
                     isActive
                       ? 'bg-violet-600/15 border-l-4 border-violet-500 shadow-inner'
                       : 'hover:bg-[#111827]/70'
@@ -458,6 +458,20 @@ export const ChatList = ({
                           title="Verified Phone"
                         />
                       )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingContact({
+                            id: contact._id,
+                            name: contact.name,
+                            phone: contact.phone,
+                          });
+                        }}
+                        className="p-1 text-slate-400 hover:text-violet-300 hover:bg-violet-600/20 rounded-md transition-colors cursor-pointer"
+                        title="Edit name"
+                      >
+                        <Edit3 className="w-3 h-3" />
+                      </button>
                     </div>
                     <p className="text-xs text-slate-400 font-mono">{contact.phone}</p>
                     <p className="text-[11px] text-slate-500 truncate max-w-[180px]">
@@ -490,11 +504,8 @@ export const ChatList = ({
         contactId={editingContact?.id || editingContact?._id}
         currentName={editingContact?.name}
         phone={editingContact?.phone}
+        avatar={editingContact?.avatar}
         onSaved={() => {
-          setCustomNamesTick((t) => t + 1);
-          if (onRefresh) onRefresh();
-        }}
-        onUpdated={() => {
           setCustomNamesTick((t) => t + 1);
           if (onRefresh) onRefresh();
         }}

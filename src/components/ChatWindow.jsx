@@ -43,19 +43,23 @@ export const ChatWindow = ({ conversation, onBack }) => {
     ) || conversation?.participants?.[0];
 
   const [displayName, setDisplayName] = useState(
-    partner ? getCustomContactName(partner._id, partner.name) : 'Veyra User'
+    partner ? getCustomContactName(partner._id, partner.name, partner.phone) : 'Veyra User'
   );
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isEditNameOpen, setIsEditNameOpen] = useState(false);
   const [isDeleteChatOpen, setIsDeleteChatOpen] = useState(false);
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [conversationId]);
 
   useEffect(() => {
     if (partner) {
-      setDisplayName(getCustomContactName(partner._id, partner.name));
+      setDisplayName(getCustomContactName(partner._id, partner.name, partner.phone));
     }
     const handleContactUpdate = () => {
       if (partner) {
-        setDisplayName(getCustomContactName(partner._id, partner.name));
+        setDisplayName(getCustomContactName(partner._id, partner.name, partner.phone));
       }
     };
     window.addEventListener('veyra_contact_updated', handleContactUpdate);
@@ -313,25 +317,25 @@ export const ChatWindow = ({ conversation, onBack }) => {
   return (
     <div className="flex-1 flex flex-col h-full min-h-0 bg-[#090d16] overflow-hidden">
       {/* Top Header */}
-      <div className="h-16 px-4 border-b border-slate-800/80 bg-[#0c1220]/95 flex items-center justify-between shrink-0 backdrop-blur-md z-30 relative">
-        <div className="flex items-center gap-3">
+      <div className="h-16 px-4 border-b border-slate-800/80 bg-[#0c1220]/95 flex items-center justify-between shrink-0 backdrop-blur-md relative z-30">
+        <div className="flex items-center gap-3 min-w-0">
           {onBack && (
             <button
               onClick={onBack}
-              className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors"
+              className="md:hidden p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition-colors shrink-0"
               title="Back to conversations"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
           )}
 
-          <div className="relative">
+          <div className="relative shrink-0">
             <img
               src={
                 partner?.avatar ||
                 `https://api.dicebear.com/7.x/identicon/svg?seed=${partner?.phone}`
               }
-              alt={partner?.name || 'Contact'}
+              alt={displayName || 'Contact'}
               className="w-10 h-10 rounded-full bg-slate-800 object-cover border border-violet-500/30"
             />
             {partner?.online && (
@@ -366,82 +370,116 @@ export const ChatWindow = ({ conversation, onBack }) => {
           </div>
         </div>
 
-        {/* 3-Dots Action Menu */}
-        <div className="relative">
+        {/* Action button: 3-dots Menu Button */}
+        <div className="flex items-center gap-1 shrink-0 relative">
           <button
             onClick={() => setIsMenuOpen((prev) => !prev)}
-            className={`p-2 rounded-xl transition-all cursor-pointer ${
+            className={`p-2.5 rounded-xl transition-all cursor-pointer relative z-50 ${
               isMenuOpen
-                ? 'bg-violet-600/30 text-violet-300 ring-1 ring-violet-500/50'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/80 active:scale-95'
+                ? 'bg-violet-600 text-white shadow-lg shadow-violet-600/30'
+                : 'text-slate-300 hover:text-white hover:bg-slate-800/80'
             }`}
-            title="Chat options"
+            title="Chat Options"
+            aria-label="Chat Options"
           >
             <MoreVertical className="w-5 h-5" />
           </button>
-
-          {isMenuOpen && (
-            <>
-              {/* Full Chat Blur Backdrop Overlay */}
-              <div
-                onClick={() => setIsMenuOpen(false)}
-                className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-fade-in"
-              />
-
-              {/* Elevated Dark Dropdown Menu */}
-              <div
-                className="absolute right-0 top-12 z-50 w-56 bg-[#0c1220] border border-slate-700/90 rounded-2xl shadow-2xl shadow-black/95 p-1.5 space-y-1 select-none animate-in fade-in zoom-in-95 duration-150 origin-top-right"
-              >
-                {/* Contact Preview in Menu */}
-                <div className="px-3 py-2 border-b border-slate-800/80 mb-1">
-                  <p className="text-xs font-semibold text-white truncate">{displayName}</p>
-                  {partner?.phone && (
-                    <p className="text-[11px] text-slate-400 font-mono mt-0.5">{partner?.phone}</p>
-                  )}
-                </div>
-
-                {/* Edit Contact Name */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setIsEditNameOpen(true);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-200 hover:text-white hover:bg-violet-600/20 hover:border-violet-500/30 border border-transparent transition-all cursor-pointer group text-left"
-                >
-                  <Edit3 className="w-4 h-4 text-violet-400 group-hover:scale-110 transition-transform" />
-                  <span>Edit Contact Name</span>
-                </button>
-
-                {/* View Profile */}
-                <Link
-                  href={`/profile/${partner?._id || ''}`}
-                  onClick={() => setIsMenuOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-slate-200 hover:text-white hover:bg-slate-800/70 border border-transparent transition-all cursor-pointer group text-left"
-                >
-                  <ShieldCheck className="w-4 h-4 text-emerald-400 group-hover:scale-110 transition-transform" />
-                  <span>View Profile</span>
-                </Link>
-
-                <div className="my-1 border-t border-slate-800/80" />
-
-                {/* Delete Chat */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMenuOpen(false);
-                    setIsDeleteChatOpen(true);
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs font-medium text-rose-400 hover:text-rose-200 hover:bg-rose-600/20 hover:border-rose-500/30 border border-transparent transition-all cursor-pointer group text-left"
-                >
-                  <Trash2 className="w-4 h-4 text-rose-400 group-hover:scale-110 transition-transform" />
-                  <span>Delete Chat</span>
-                </button>
-              </div>
-            </>
-          )}
         </div>
       </div>
+
+      {/* Backdrop Overlay when 3-dots menu is open (blurs & dims the chat with deep blue/slate tint) */}
+      {isMenuOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-[#030712]/75 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+          onClick={() => setIsMenuOpen(false)}
+        />
+      )}
+
+      {/* 3-dots Dropdown Menu (Dark theme, positioned at top right above chat text) */}
+      {isMenuOpen && (
+        <div
+          className="absolute right-3 top-16 z-50 w-64 bg-[#0c1220] border border-slate-700/90 rounded-2xl shadow-2xl shadow-black/95 overflow-hidden animate-in fade-in zoom-in-95 duration-150 backdrop-blur-2xl"
+        >
+          {/* Header Info */}
+          <div className="px-4 py-3 border-b border-slate-800/90 bg-[#090d16]/90">
+            <p className="text-[10px] font-bold uppercase tracking-wider text-violet-400">
+              Chat Options
+            </p>
+            <p className="text-sm font-semibold text-white truncate mt-0.5">
+              {displayName}
+            </p>
+            {partner?.phone && (
+              <p className="text-xs text-slate-400 font-mono mt-0.5">
+                {partner.phone}
+              </p>
+            )}
+          </div>
+
+          {/* Menu Options */}
+          <div className="p-1.5 space-y-0.5 bg-[#0c1220]">
+            {/* Edit Contact Name */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                setIsEditNameOpen(true);
+              }}
+              className="w-full px-3.5 py-2.5 text-left text-xs font-medium text-slate-200 hover:text-white hover:bg-violet-600/20 rounded-xl flex items-center gap-3 transition-colors cursor-pointer group"
+            >
+              <div className="p-1.5 rounded-lg bg-violet-600/20 text-violet-400 group-hover:bg-violet-600 group-hover:text-white transition-colors shrink-0">
+                <Edit3 className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-semibold text-slate-100 group-hover:text-white text-xs">
+                  Edit Name
+                </div>
+                <div className="text-[10px] text-slate-400 truncate">
+                  Change contact nickname
+                </div>
+              </div>
+            </button>
+
+            {/* Delete Chat */}
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                setIsDeleteChatOpen(true);
+              }}
+              className="w-full px-3.5 py-2.5 text-left text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 rounded-xl flex items-center gap-3 transition-colors cursor-pointer group"
+            >
+              <div className="p-1.5 rounded-lg bg-rose-500/20 text-rose-400 group-hover:bg-rose-500 group-hover:text-white transition-colors shrink-0">
+                <Trash2 className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-semibold text-rose-400 group-hover:text-rose-300 text-xs">
+                  Delete Chat
+                </div>
+                <div className="text-[10px] text-rose-400/70 truncate">
+                  Delete conversation & messages
+                </div>
+              </div>
+            </button>
+
+            {/* View Profile */}
+            <Link
+              href={`/profile/${partner?._id || ''}`}
+              onClick={() => setIsMenuOpen(false)}
+              className="w-full px-3.5 py-2.5 text-left text-xs font-medium text-slate-300 hover:text-white hover:bg-slate-800/60 rounded-xl flex items-center gap-3 transition-colors group"
+            >
+              <div className="p-1.5 rounded-lg bg-slate-800 text-slate-400 group-hover:text-violet-400 transition-colors shrink-0">
+                <ShieldCheck className="w-4 h-4" />
+              </div>
+              <div className="min-w-0">
+                <div className="font-semibold text-slate-200 group-hover:text-white text-xs">
+                  View Profile
+                </div>
+                <div className="text-[10px] text-slate-400 truncate">
+                  Member info & verification
+                </div>
+              </div>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Messages Scroll Area with Wallpaper */}
       <div className="flex-1 relative overflow-hidden flex flex-col min-h-0 bg-[#090d16]">
@@ -532,9 +570,6 @@ export const ChatWindow = ({ conversation, onBack }) => {
         phone={partner?.phone}
         avatar={partner?.avatar}
         onSaved={(newName) => {
-          setDisplayName(newName);
-        }}
-        onUpdated={(newName) => {
           setDisplayName(newName);
         }}
       />

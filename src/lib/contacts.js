@@ -3,25 +3,20 @@
  * Saved persistently in localStorage and dispatches live update events
  */
 
-const extractId = (u) => {
-  if (!u) return '';
-  if (typeof u === 'string') return u;
-  if (typeof u === 'object') {
-    return (u._id || u.id || u).toString();
-  }
-  return String(u);
-};
-
-export const getCustomContactName = (userId, defaultName) => {
-  if (typeof window === 'undefined' || !userId) return defaultName;
-  const key = extractId(userId);
-  if (!key) return defaultName;
-
+export const getCustomContactName = (identifier, defaultName, fallbackPhone) => {
+  if (typeof window === 'undefined') return defaultName;
   try {
     const raw = localStorage.getItem('veyra_custom_contact_names');
     if (!raw) return defaultName;
     const map = JSON.parse(raw);
-    return map[key] || defaultName;
+
+    if (identifier && map[identifier?.toString()]) {
+      return map[identifier.toString()];
+    }
+    if (fallbackPhone && map[fallbackPhone?.toString()]) {
+      return map[fallbackPhone.toString()];
+    }
+    return defaultName;
   } catch (e) {
     return defaultName;
   }
@@ -37,25 +32,27 @@ export const getAllCustomContactNames = () => {
   }
 };
 
-export const setCustomContactName = (userId, customName) => {
-  if (typeof window === 'undefined' || !userId) return;
-  const key = extractId(userId);
-  if (!key) return;
-
+export const setCustomContactName = (identifier, customName, fallbackPhone) => {
+  if (typeof window === 'undefined') return;
   try {
     const raw = localStorage.getItem('veyra_custom_contact_names');
     const map = raw ? JSON.parse(raw) : {};
-    if (customName && customName.trim()) {
-      map[key] = customName.trim();
+    const trimmed = customName && customName.trim() ? customName.trim() : null;
+
+    if (trimmed) {
+      if (identifier) map[identifier.toString()] = trimmed;
+      if (fallbackPhone) map[fallbackPhone.toString()] = trimmed;
     } else {
-      delete map[key];
+      if (identifier) delete map[identifier.toString()];
+      if (fallbackPhone) delete map[fallbackPhone.toString()];
     }
+
     localStorage.setItem('veyra_custom_contact_names', JSON.stringify(map));
 
     // Dispatch custom event so all active components re-render immediately
     window.dispatchEvent(
       new CustomEvent('veyra_contact_updated', {
-        detail: { userId: key, customName: customName?.trim() || null },
+        detail: { identifier, fallbackPhone, customName: trimmed },
       })
     );
   } catch (e) {

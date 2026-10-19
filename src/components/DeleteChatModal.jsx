@@ -37,7 +37,7 @@ export const DeleteChatModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in select-none">
       <div className="relative w-full max-w-sm bg-[#0f172a] border border-rose-500/30 rounded-3xl shadow-2xl shadow-rose-950/40 overflow-hidden flex flex-col p-6 text-center">
         {/* Warning Icon */}
         <div className="w-14 h-14 rounded-2xl bg-rose-500/20 text-rose-400 border border-rose-500/30 flex items-center justify-center mx-auto mb-4">
