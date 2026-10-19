@@ -5,30 +5,34 @@ import { useRouter } from 'next/navigation';
 import {
   Settings,
   Bell,
+  BellRing,
+  Volume2,
+  Vibrate,
+  Eye,
   Shield,
   Server,
-  Activity,
   RefreshCw,
   ArrowLeft,
   Palette,
   Image as ImageIcon,
-  Smartphone,
   Upload,
   Trash2,
   Check,
-  MessageSquare,
+  CheckCheck,
+  Radio,
+  Sparkles,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
   useCustomization,
   THEMES,
   WALLPAPER_PRESETS,
-  APP_ICON_PRESETS,
   getWallpaperStyle,
 } from '../../context/CustomizationContext';
 import api from '../../lib/api';
 import AppSidebar from '../../components/AppSidebar';
 import LoadingState from '../../components/LoadingState';
+import { playMessageSound } from '../../lib/sound';
 
 export default function SettingsPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -42,25 +46,83 @@ export default function SettingsPage() {
     setWallpaper,
     wallpaperDim,
     updateWallpaperDim,
-    appIcon,
-    setAppIcon,
-    customAppIcon,
-    setCustomAppIcon,
   } = useCustomization();
 
   const wallpaperInputRef = useRef(null);
-  const appIconInputRef = useRef(null);
   const [wallpaperFeedback, setWallpaperFeedback] = useState('');
-  const [appIconFeedback, setAppIconFeedback] = useState('');
 
-  // Settings states
+  // Privacy states
   const [readReceipts, setReadReceipts] = useState(true);
-  const [soundNotifications, setSoundNotifications] = useState(true);
   const [presenceVisibility, setPresenceVisibility] = useState(true);
 
-  // Status diagnostics
+  // Notification states
+  const [soundAlerts, setSoundAlerts] = useState(true);
+  const [pushNotifications, setPushNotifications] = useState(false);
+  const [messagePreview, setMessagePreview] = useState(true);
+  const [vibrationAlerts, setVibrationAlerts] = useState(true);
+  const [browserPermission, setBrowserPermission] = useState('default');
+  const [notificationFeedback, setNotificationFeedback] = useState('');
+
+  // Diagnostics states
   const [healthData, setHealthData] = useState(null);
   const [diagnosticsLoading, setDiagnosticsLoading] = useState(false);
+
+  // Load saved preferences on client mount
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    try {
+      const savedSound = localStorage.getItem('veyra_sound_alerts');
+      if (savedSound !== null) setSoundAlerts(savedSound === 'true');
+
+      const savedPreview = localStorage.getItem('veyra_message_preview');
+      if (savedPreview !== null) setMessagePreview(savedPreview === 'true');
+
+      const savedVibrate = localStorage.getItem('veyra_vibration_alerts');
+      if (savedVibrate !== null) setVibrationAlerts(savedVibrate === 'true');
+
+      const savedReceipts = localStorage.getItem('veyra_read_receipts');
+      if (savedReceipts !== null) setReadReceipts(savedReceipts === 'true');
+
+      const savedPresence = localStorage.getItem('veyra_presence_visibility');
+      if (savedPresence !== null) setPresenceVisibility(savedPresence === 'true');
+
+      if ('Notification' in window) {
+        setBrowserPermission(Notification.permission);
+        if (Notification.permission === 'granted') {
+          setPushNotifications(true);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not read settings from storage:', e);
+    }
+  }, []);
+
+  // Route protection
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login');
+    }
+  }, [authLoading, isAuthenticated, router]);
+
+  // Load diagnostics
+  const loadDiagnostics = async () => {
+    try {
+      setDiagnosticsLoading(true);
+      const { data } = await api.get('/health');
+      setHealthData(data);
+    } catch (err) {
+      console.error('Failed to load system diagnostics:', err);
+    } finally {
+      setDiagnosticsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      loadDiagnostics();
+    }
+  }, [isAuthenticated]);
 
   // Handle uploading custom wallpaper from gallery
   const handleWallpaperUpload = (e) => {
@@ -106,97 +168,127 @@ export default function SettingsPage() {
     reader.readAsDataURL(file);
   };
 
-  // Handle uploading custom app icon from gallery
-  const handleAppIconUpload = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Notification handlers
+  const handleToggleSound = () => {
+    const next = !soundAlerts;
+    setSoundAlerts(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('veyra_sound_alerts', next.toString());
+    }
+  };
 
-    if (!file.type.startsWith('image/')) {
-      setAppIconFeedback('Please select a valid image file');
+  const handleTestSound = () => {
+    playMessageSound();
+    setNotificationFeedback('Played test audio chime! 🔔');
+    setTimeout(() => setNotificationFeedback(''), 2500);
+  };
+
+  const handleToggleMessagePreview = () => {
+    const next = !messagePreview;
+    setMessagePreview(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('veyra_message_preview', next.toString());
+    }
+  };
+
+  const handleToggleVibration = () => {
+    const next = !vibrationAlerts;
+    setVibrationAlerts(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('veyra_vibration_alerts', next.toString());
+      if (next && navigator.vibrate) {
+        navigator.vibrate([120, 60, 120]);
+      }
+    }
+  };
+
+  const handleTestVibration = () => {
+    if (typeof navigator !== 'undefined' && navigator.vibrate) {
+      navigator.vibrate([150, 80, 150]);
+      setNotificationFeedback('Haptic vibration triggered! 📳');
+    } else {
+      setNotificationFeedback('Vibration API not supported on this browser/device');
+    }
+    setTimeout(() => setNotificationFeedback(''), 3000);
+  };
+
+  const handleRequestPushPermission = async () => {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      setNotificationFeedback('Browser notifications not supported on this browser');
+      setTimeout(() => setNotificationFeedback(''), 3000);
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxDim = 256;
-        let width = img.width;
-        let height = img.height;
-
-        const minSide = Math.min(width, height);
-        const startX = (width - minSide) / 2;
-        const startY = (height - minSide) / 2;
-
-        canvas.width = maxDim;
-        canvas.height = maxDim;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, startX, startY, minSide, minSide, 0, 0, maxDim, maxDim);
-
-        const compressedDataUrl = canvas.toDataURL('image/png');
-        setCustomAppIcon(compressedDataUrl);
-        setAppIconFeedback('Custom app icon uploaded and applied from gallery!');
-        setTimeout(() => setAppIconFeedback(''), 3500);
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  };
-
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push('/login');
-    }
-  }, [authLoading, isAuthenticated, router]);
-
-  const loadDiagnostics = async () => {
     try {
-      setDiagnosticsLoading(true);
-      const { data } = await api.get('/health');
-      setHealthData(data);
+      const permission = await Notification.requestPermission();
+      setBrowserPermission(permission);
+      if (permission === 'granted') {
+        setPushNotifications(true);
+        new Notification('Veyra Chat', {
+          body: 'Notifications enabled! You will receive instant message alerts.',
+          icon: '/images/iconlogo.jpeg',
+        });
+        setNotificationFeedback('Notifications enabled successfully! 🎉');
+      } else {
+        setPushNotifications(false);
+        setNotificationFeedback('Notification permission was ' + permission);
+      }
     } catch (err) {
-      console.error('Failed to load system diagnostics:', err);
-    } finally {
-      setDiagnosticsLoading(false);
+      console.error('Failed to request notification permission:', err);
+      setNotificationFeedback('Failed to request permission');
+    }
+    setTimeout(() => setNotificationFeedback(''), 3500);
+  };
+
+  const handleToggleReadReceipts = () => {
+    const next = !readReceipts;
+    setReadReceipts(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('veyra_read_receipts', next.toString());
     }
   };
 
-  useEffect(() => {
-    if (isAuthenticated) {
-      loadDiagnostics();
+  const handleTogglePresence = () => {
+    const next = !presenceVisibility;
+    setPresenceVisibility(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('veyra_presence_visibility', next.toString());
     }
-  }, [isAuthenticated]);
+  };
 
-  if (authLoading || (!isAuthenticated && !authLoading)) {
-    return <LoadingState message="Loading application settings..." />;
+  if (authLoading) {
+    return <LoadingState message="Loading settings..." />;
   }
 
   return (
     <div className="flex h-screen w-screen overflow-hidden bg-[#090d16] text-white">
       <AppSidebar />
 
-      <main className="flex-1 overflow-y-auto p-4 sm:p-8 max-w-4xl mx-auto">
+      <main className="flex-1 overflow-y-auto p-4 sm:p-8 max-w-4xl mx-auto pb-24 md:pb-8">
         {/* Header navigation */}
         <div className="flex items-center justify-between mb-8 pb-4 border-b border-slate-800">
           <div className="flex items-center gap-3">
             <button
               onClick={() => router.push('/chats')}
-              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors"
+              className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
               title="Return to chats"
             >
               <ArrowLeft className="w-5 h-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold tracking-tight text-white">Settings</h1>
-              <p className="text-xs text-slate-400">Configure messaging, privacy, and services</p>
+              <h1 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                Settings
+              </h1>
+              <p className="text-xs text-slate-400">
+                Configure notifications, privacy, wallpaper, and theme
+              </p>
             </div>
           </div>
 
           <button
             onClick={loadDiagnostics}
             disabled={diagnosticsLoading}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#111827] border border-slate-800 hover:border-violet-500/40 text-slate-300 text-xs font-medium transition-all"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-[#111827] border border-slate-800 hover:border-violet-500/40 text-slate-300 text-xs font-medium transition-all cursor-pointer"
             title="Refresh system diagnostics"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${diagnosticsLoading ? 'animate-spin' : ''}`} />
@@ -205,7 +297,194 @@ export default function SettingsPage() {
         </div>
 
         <div className="space-y-6">
-          {/* Privacy & Messaging Preferences */}
+          {/* ================= 1. NOTIFICATIONS SETTINGS ================= */}
+          <div className="p-6 rounded-3xl bg-[#0c1220] border border-slate-800 shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 rounded-xl bg-violet-600/20 text-violet-400">
+                  <Bell className="w-5 h-5" />
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-white">Notification Preferences</h2>
+                  <p className="text-xs text-slate-400">
+                    Control sound chimes, alerts, and browser push notifications
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {notificationFeedback && (
+              <div className="mb-4 p-3 rounded-xl bg-violet-600/20 border border-violet-500/30 text-violet-300 text-xs flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-violet-400 shrink-0" />
+                <span>{notificationFeedback}</span>
+              </div>
+            )}
+
+            <div className="divide-y divide-slate-800/80">
+              {/* Audible Sound Alerts */}
+              <div className="py-3.5 flex items-center justify-between">
+                <div className="flex items-start gap-3 min-w-0 pr-4">
+                  <Volume2 className="w-4 h-4 text-violet-400 mt-1 shrink-0" />
+                  <div>
+                    <span className="text-sm font-semibold text-slate-200 block">
+                      Audible Message Chime
+                    </span>
+                    <span className="text-xs text-slate-400 block">
+                      Play instant harmonic bell chime when a new message arrives.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleTestSound}
+                      className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet-600/15 hover:bg-violet-600/30 text-violet-300 text-[11px] font-semibold border border-violet-500/30 transition-colors cursor-pointer"
+                    >
+                      <Volume2 className="w-3 h-3" />
+                      <span>Test Sound</span>
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleSound}
+                  className={`w-12 h-6 rounded-full transition-colors relative p-0.5 shrink-0 cursor-pointer ${
+                    soundAlerts ? 'bg-violet-600' : 'bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`block w-5 h-5 rounded-full bg-white transition-transform ${
+                      soundAlerts ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Browser / Push Notifications */}
+              <div className="py-3.5 flex items-center justify-between">
+                <div className="flex items-start gap-3 min-w-0 pr-4">
+                  <BellRing className="w-4 h-4 text-violet-400 mt-1 shrink-0" />
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-slate-200 block">
+                        Browser Push Notifications
+                      </span>
+                      <span
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold uppercase ${
+                          browserPermission === 'granted'
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+                            : browserPermission === 'denied'
+                            ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30'
+                            : 'bg-slate-800 text-slate-400'
+                        }`}
+                      >
+                        {browserPermission}
+                      </span>
+                    </div>
+                    <span className="text-xs text-slate-400 block mt-0.5">
+                      Receive alerts even when Veyra Chat is minimized or in the background.
+                    </span>
+                    {browserPermission !== 'granted' && (
+                      <button
+                        type="button"
+                        onClick={handleRequestPushPermission}
+                        className="mt-1.5 inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[11px] font-semibold transition-all shadow-sm cursor-pointer"
+                      >
+                        <Bell className="w-3 h-3" />
+                        <span>Enable Notifications</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (browserPermission !== 'granted') {
+                      handleRequestPushPermission();
+                    } else {
+                      setPushNotifications(!pushNotifications);
+                    }
+                  }}
+                  className={`w-12 h-6 rounded-full transition-colors relative p-0.5 shrink-0 cursor-pointer ${
+                    pushNotifications && browserPermission === 'granted'
+                      ? 'bg-violet-600'
+                      : 'bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`block w-5 h-5 rounded-full bg-white transition-transform ${
+                      pushNotifications && browserPermission === 'granted'
+                        ? 'translate-x-6'
+                        : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Message Preview in Alerts */}
+              <div className="py-3.5 flex items-center justify-between">
+                <div className="flex items-start gap-3 min-w-0 pr-4">
+                  <Eye className="w-4 h-4 text-violet-400 mt-1 shrink-0" />
+                  <div>
+                    <span className="text-sm font-semibold text-slate-200 block">
+                      Message Content Preview
+                    </span>
+                    <span className="text-xs text-slate-400">
+                      Show sender name and message text snippet inside incoming notifications.
+                    </span>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleMessagePreview}
+                  className={`w-12 h-6 rounded-full transition-colors relative p-0.5 shrink-0 cursor-pointer ${
+                    messagePreview ? 'bg-violet-600' : 'bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`block w-5 h-5 rounded-full bg-white transition-transform ${
+                      messagePreview ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {/* Mobile Vibration Alert */}
+              <div className="py-3.5 flex items-center justify-between">
+                <div className="flex items-start gap-3 min-w-0 pr-4">
+                  <Vibrate className="w-4 h-4 text-violet-400 mt-1 shrink-0" />
+                  <div>
+                    <span className="text-sm font-semibold text-slate-200 block">
+                      Vibration Alerts
+                    </span>
+                    <span className="text-xs text-slate-400 block">
+                      Vibrate smartphone haptics when new messages are delivered.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleTestVibration}
+                      className="mt-1.5 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-violet-600/15 hover:bg-violet-600/30 text-violet-300 text-[11px] font-semibold border border-violet-500/30 transition-colors cursor-pointer"
+                    >
+                      <Vibrate className="w-3 h-3" />
+                      <span>Test Vibrate</span>
+                    </button>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleToggleVibration}
+                  className={`w-12 h-6 rounded-full transition-colors relative p-0.5 shrink-0 cursor-pointer ${
+                    vibrationAlerts ? 'bg-violet-600' : 'bg-slate-700'
+                  }`}
+                >
+                  <span
+                    className={`block w-5 h-5 rounded-full bg-white transition-transform ${
+                      vibrationAlerts ? 'translate-x-6' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* ================= 2. PRIVACY & READ RECEIPTS ================= */}
           <div className="p-6 rounded-3xl bg-[#0c1220] border border-slate-800 shadow-md">
             <div className="flex items-center gap-2 mb-4">
               <Shield className="w-5 h-5 text-violet-400" />
@@ -222,8 +501,8 @@ export default function SettingsPage() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => setReadReceipts(!readReceipts)}
-                  className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
+                  onClick={handleToggleReadReceipts}
+                  className={`w-12 h-6 rounded-full transition-colors relative p-0.5 shrink-0 cursor-pointer ${
                     readReceipts ? 'bg-violet-600' : 'bg-slate-700'
                   }`}
                 >
@@ -239,13 +518,13 @@ export default function SettingsPage() {
                 <div>
                   <span className="text-sm font-semibold text-slate-200 block">Online Presence</span>
                   <span className="text-xs text-slate-400">
-                    Broadcast active socket status when using Veyra Chat.
+                    Broadcast active online status when using Veyra Chat.
                   </span>
                 </div>
                 <button
                   type="button"
-                  onClick={() => setPresenceVisibility(!presenceVisibility)}
-                  className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
+                  onClick={handleTogglePresence}
+                  className={`w-12 h-6 rounded-full transition-colors relative p-0.5 shrink-0 cursor-pointer ${
                     presenceVisibility ? 'bg-violet-600' : 'bg-slate-700'
                   }`}
                 >
@@ -259,37 +538,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Notifications */}
-          <div className="p-6 rounded-3xl bg-[#0c1220] border border-slate-800 shadow-md">
-            <div className="flex items-center gap-2 mb-4">
-              <Bell className="w-5 h-5 text-violet-400" />
-              <h2 className="text-base font-bold text-white">Notifications</h2>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-sm font-semibold text-slate-200 block">Audible Alerts</span>
-                <span className="text-xs text-slate-400">
-                  Play subtle chime when receiving new messages.
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setSoundNotifications(!soundNotifications)}
-                className={`w-12 h-6 rounded-full transition-colors relative p-0.5 ${
-                  soundNotifications ? 'bg-violet-600' : 'bg-slate-700'
-                }`}
-              >
-                <span
-                  className={`block w-5 h-5 rounded-full bg-white transition-transform ${
-                    soundNotifications ? 'translate-x-6' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-
-          {/* Application Theme Customization */}
+          {/* ================= 3. APPLICATION THEME ================= */}
           <div className="p-6 rounded-3xl bg-[#0c1220] border border-slate-800 shadow-md">
             <div className="flex items-center gap-2 mb-2">
               <Palette className="w-5 h-5 text-violet-400" />
@@ -333,7 +582,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Chat Wallpaper Customization */}
+          {/* ================= 4. CHAT WALLPAPER ================= */}
           <div className="p-6 rounded-3xl bg-[#0c1220] border border-slate-800 shadow-md">
             <div className="flex items-center justify-between mb-2">
               <div className="flex items-center gap-2">
@@ -451,7 +700,9 @@ export default function SettingsPage() {
                           : 'border-slate-800 bg-[#090d16] text-slate-400 hover:text-white hover:border-slate-700'
                       }`}
                     >
-                      <div className={`w-full h-9 rounded-lg mb-1.5 border border-slate-700/60 overflow-hidden relative ${p.preview}`}>
+                      <div
+                        className={`w-full h-9 rounded-lg mb-1.5 border border-slate-700/60 overflow-hidden relative ${p.preview}`}
+                      >
                         {isSelected && (
                           <div className="absolute inset-0 bg-violet-600/20 flex items-center justify-center">
                             <Check className="w-3.5 h-3.5 text-white" />
@@ -466,114 +717,7 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* App Icon & Branding Customization */}
-          <div className="p-6 rounded-3xl bg-[#0c1220] border border-slate-800 shadow-md">
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5 text-violet-400" />
-                <h2 className="text-base font-bold text-white">App Icon & Branding</h2>
-              </div>
-              {(customAppIcon || appIcon !== 'violet') && (
-                <button
-                  type="button"
-                  onClick={() => setAppIcon('violet')}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] text-slate-400 hover:text-violet-300 hover:bg-violet-600/10 transition-colors cursor-pointer"
-                >
-                  <RefreshCw className="w-3 h-3" />
-                  <span>Reset to Default</span>
-                </button>
-              )}
-            </div>
-            <p className="text-xs text-slate-400 mb-4">
-              Select or upload a custom app icon from your gallery to personalize sidebar and browser branding.
-            </p>
-
-            {/* Hidden file input for app icon */}
-            <input
-              type="file"
-              ref={appIconInputRef}
-              onChange={handleAppIconUpload}
-              accept="image/*"
-              className="hidden"
-            />
-
-            {appIconFeedback && (
-              <div className="mb-4 p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs">
-                {appIconFeedback}
-              </div>
-            )}
-
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              {/* Custom gallery upload box */}
-              <button
-                type="button"
-                onClick={() => appIconInputRef.current?.click()}
-                className="w-full sm:w-auto flex-1 p-4 rounded-2xl border-2 border-dashed border-slate-700 hover:border-violet-500 bg-[#090d16]/70 hover:bg-violet-600/5 flex items-center gap-3 transition-all cursor-pointer group"
-              >
-                <div className="w-12 h-12 rounded-2xl bg-violet-600/15 border border-violet-500/30 flex items-center justify-center text-violet-400 shrink-0 group-hover:scale-105 transition-transform">
-                  <Upload className="w-5 h-5" />
-                </div>
-                <div className="text-left">
-                  <span className="text-xs font-bold text-white block">Upload Icon from Gallery</span>
-                  <span className="text-[11px] text-slate-400 block">
-                    Use any logo, PNG, or photo as app icon
-                  </span>
-                </div>
-              </button>
-
-              {/* Current Icon Preview */}
-              <div className="p-3.5 rounded-2xl bg-[#090d16] border border-slate-800 flex items-center gap-3 shrink-0">
-                <span className="text-xs text-slate-400">Current Icon:</span>
-                {customAppIcon ? (
-                  <img
-                    src={customAppIcon}
-                    alt="Active Icon"
-                    className="w-10 h-10 rounded-2xl object-cover border border-violet-500/40 shadow-md shadow-violet-900/30"
-                  />
-                ) : (
-                  <div
-                    className={`w-10 h-10 rounded-2xl bg-gradient-to-tr ${
-                      APP_ICON_PRESETS.find((p) => p.id === appIcon)?.gradient ||
-                      'from-violet-600 to-indigo-600'
-                    } flex items-center justify-center text-white shadow-md shadow-violet-900/30`}
-                  >
-                    <MessageSquare className="w-5 h-5" />
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Icon Presets */}
-            <div className="mt-4 pt-4 border-t border-slate-800">
-              <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 block mb-2.5">
-                Preset App Icons:
-              </span>
-              <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                {APP_ICON_PRESETS.map((preset) => {
-                  const isSelected = !customAppIcon && appIcon === preset.id;
-                  return (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => setAppIcon(preset.id)}
-                      className={`p-2.5 rounded-xl border flex flex-col items-center gap-1.5 transition-all cursor-pointer ${
-                        isSelected
-                          ? 'border-violet-500 bg-violet-600/20 text-white font-bold ring-1 ring-violet-500'
-                          : 'border-slate-800 bg-[#090d16] text-slate-400 hover:text-white'
-                      }`}
-                    >
-                      <div
-                        className={`w-8 h-8 rounded-xl bg-gradient-to-tr ${preset.gradient} flex items-center justify-center text-white shadow-sm`}
-                      >
-                        <MessageSquare className="w-4 h-4" />
-                      </div>
-                      <span className="text-[11px] truncate w-full text-center">{preset.name}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
+          {/* ================= 5. BACKEND HEALTH DIAGNOSTICS ================= */}
           <div className="p-6 rounded-3xl bg-[#0c1220] border border-slate-800 shadow-md">
             <div className="flex items-center gap-2 mb-3">
               <Server className="w-5 h-5 text-violet-400" />
@@ -587,16 +731,24 @@ export default function SettingsPage() {
                   <span className="font-bold text-emerald-400 uppercase">{healthData.status}</span>
                 </div>
                 <div className="p-3 rounded-xl bg-[#090d16] border border-slate-800">
-                  <span className="text-slate-500 block mb-1">Version</span>
-                  <span className="font-mono text-slate-200">{healthData.version}</span>
+                  <span className="text-slate-500 block mb-1">Service</span>
+                  <span className="font-mono text-slate-200 truncate block">
+                    {healthData.service || 'Veyra API'}
+                  </span>
                 </div>
                 <div className="p-3 rounded-xl bg-[#090d16] border border-slate-800">
-                  <span className="text-slate-500 block mb-1">Uptime</span>
-                  <span className="font-mono text-slate-200">{healthData.uptime}s</span>
+                  <span className="text-slate-500 block mb-1">Database</span>
+                  <span className="font-mono text-emerald-400 uppercase">
+                    {healthData.database || 'Connected'}
+                  </span>
                 </div>
                 <div className="p-3 rounded-xl bg-[#090d16] border border-slate-800">
-                  <span className="text-slate-500 block mb-1">Environment</span>
-                  <span className="font-mono text-slate-200">{healthData.environment}</span>
+                  <span className="text-slate-500 block mb-1">Server Time</span>
+                  <span className="font-mono text-slate-200 truncate block">
+                    {healthData.timestamp
+                      ? new Date(healthData.timestamp).toLocaleTimeString()
+                      : 'Live'}
+                  </span>
                 </div>
               </div>
             ) : (
