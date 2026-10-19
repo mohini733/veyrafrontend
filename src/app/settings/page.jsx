@@ -275,7 +275,7 @@ export default function SettingsPage() {
     }
   };
 
-  if (authLoading) {
+  if (authLoading || !isAuthenticated) {
     return <LoadingState message="Loading settings..." />;
   }
 

@@ -1,10 +1,24 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import Link from 'next/link';
-import { MessageSquare, ArrowLeft, Home } from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { MessageSquare, Home } from 'lucide-react';
 
 export default function NotFound() {
+  const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const path = window.location.pathname;
+      if (path && path.endsWith('.html')) {
+        const clean = path.replace(/\.html$/, '');
+        router.replace(clean || '/chats');
+      }
+    }
+  }, [router]);
+
   return (
     <div className="min-h-screen bg-[#090d16] text-white flex flex-col items-center justify-center p-6 text-center select-none">
       <div className="relative mb-8">
@@ -20,23 +34,22 @@ export default function NotFound() {
         Conversation or Page Not Found
       </h1>
       <p className="text-sm text-slate-400 max-w-sm mb-8 leading-relaxed">
-        The link you followed might be broken, or the conversation may have been archived or deleted.
+        The link you followed might be broken, or the page may have moved.
       </p>
 
       <div className="flex flex-col sm:flex-row gap-3">
         <Link
           href="/chats"
-          className="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 flex items-center justify-center gap-2 transition-all"
+          className="px-6 py-3 rounded-xl bg-violet-600 hover:bg-violet-500 text-white text-xs font-semibold shadow-lg shadow-violet-600/30 flex items-center justify-center gap-2 transition-all cursor-pointer"
         >
           <MessageSquare className="w-4 h-4" />
           <span>Back to Messages</span>
         </Link>
         <Link
-          href="/"
-          className="px-6 py-3 rounded-xl bg-[#111827] border border-slate-700 hover:bg-[#162038] text-slate-200 text-xs font-semibold flex items-center justify-center gap-2 transition-all"
+          href="/settings"
+          className="px-6 py-3 rounded-xl bg-[#111827] border border-slate-700 hover:bg-[#162038] text-slate-200 text-xs font-semibold flex items-center justify-center gap-2 transition-all cursor-pointer"
         >
-          <Home className="w-4 h-4 text-slate-400" />
-          <span>Veyra Home</span>
+          <span>Open Settings</span>
         </Link>
       </div>
     </div>
