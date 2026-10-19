@@ -17,10 +17,11 @@ import {
   Image as ImageIcon,
   Upload,
   Trash2,
-  Check,
   CheckCheck,
   Radio,
   Sparkles,
+  Music,
+  Play,
 } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import {
@@ -32,7 +33,12 @@ import {
 import api from '../../lib/api';
 import AppSidebar from '../../components/AppSidebar';
 import LoadingState from '../../components/LoadingState';
-import { playMessageSound } from '../../lib/sound';
+import {
+  playMessageSound,
+  NOTIFICATION_TUNES,
+  getSelectedToneId,
+  setSelectedToneId,
+} from '../../lib/sound';
 
 export default function SettingsPage() {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
@@ -57,6 +63,7 @@ export default function SettingsPage() {
 
   // Notification states
   const [soundAlerts, setSoundAlerts] = useState(true);
+  const [selectedTone, setSelectedTone] = useState('crystal');
   const [pushNotifications, setPushNotifications] = useState(false);
   const [messagePreview, setMessagePreview] = useState(true);
   const [vibrationAlerts, setVibrationAlerts] = useState(true);
@@ -74,6 +81,8 @@ export default function SettingsPage() {
     try {
       const savedSound = localStorage.getItem('veyra_sound_alerts');
       if (savedSound !== null) setSoundAlerts(savedSound === 'true');
+
+      setSelectedTone(getSelectedToneId());
 
       const savedPreview = localStorage.getItem('veyra_message_preview');
       if (savedPreview !== null) setMessagePreview(savedPreview === 'true');
@@ -178,8 +187,18 @@ export default function SettingsPage() {
   };
 
   const handleTestSound = () => {
-    playMessageSound();
-    setNotificationFeedback('Played test audio chime! 🔔');
+    playMessageSound(selectedTone, true);
+    const currentTune = NOTIFICATION_TUNES.find((t) => t.id === selectedTone);
+    setNotificationFeedback(`Played "${currentTune?.name || 'Veyra Crystal'}" chime! 🔔`);
+    setTimeout(() => setNotificationFeedback(''), 2500);
+  };
+
+  const handleSelectTone = (toneId) => {
+    setSelectedTone(toneId);
+    setSelectedToneId(toneId);
+    playMessageSound(toneId, true);
+    const tuneObj = NOTIFICATION_TUNES.find((t) => t.id === toneId);
+    setNotificationFeedback(`Notification tune set to "${tuneObj?.name || toneId}"! 🎵`);
     setTimeout(() => setNotificationFeedback(''), 2500);
   };
 
@@ -330,7 +349,7 @@ export default function SettingsPage() {
                       Audible Message Chime
                     </span>
                     <span className="text-xs text-slate-400 block">
-                      Play instant harmonic bell chime when a new message arrives.
+                      Play instant harmonic tone when a new message arrives.
                     </span>
                     <button
                       type="button"
@@ -356,6 +375,83 @@ export default function SettingsPage() {
                   />
                 </button>
               </div>
+
+              {/* Notification Tune Selector */}
+              {soundAlerts && (
+                <div className="py-4 bg-[#090d16]/70 p-4 rounded-2xl border border-slate-800/80 my-2">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center gap-2">
+                      <Music className="w-4 h-4 text-violet-400" />
+                      <span className="text-xs font-bold uppercase tracking-wider text-slate-200">
+                        Notification Tune
+                      </span>
+                    </div>
+                    <span className="text-[11px] text-violet-400 font-mono font-semibold">
+                      {NOTIFICATION_TUNES.find((t) => t.id === selectedTone)?.name || 'Veyra Crystal'}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-slate-400 mb-3">
+                    Click any tune to listen to a preview and set it as your incoming message sound.
+                  </p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                    {NOTIFICATION_TUNES.map((tune) => {
+                      const isSelected = selectedTone === tune.id;
+                      return (
+                        <button
+                          key={tune.id}
+                          type="button"
+                          onClick={() => handleSelectTone(tune.id)}
+                          className={`p-3 rounded-xl border text-left transition-all relative cursor-pointer group flex flex-col justify-between ${
+                            isSelected
+                              ? 'border-violet-500 bg-violet-600/20 shadow-md shadow-violet-950/40 ring-1 ring-violet-500'
+                              : 'border-slate-800 bg-[#0c1220] hover:border-slate-700 hover:bg-[#131c31]'
+                          }`}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span
+                              className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                                isSelected
+                                  ? 'bg-violet-600 text-white'
+                                  : 'bg-slate-800 text-slate-400 group-hover:text-slate-200'
+                              }`}
+                            >
+                              {tune.tag}
+                            </span>
+
+                            <div className="flex items-center gap-1">
+                              <div
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  playMessageSound(tune.id, true);
+                                }}
+                                className="p-1 rounded-md hover:bg-violet-600/30 text-violet-400 transition-colors"
+                                title="Play preview"
+                              >
+                                <Play className="w-3 h-3 fill-current" />
+                              </div>
+                              {isSelected && (
+                                <span className="w-4 h-4 rounded-full bg-violet-600 text-white flex items-center justify-center">
+                                  <Check className="w-2.5 h-2.5" />
+                                </span>
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <span className="text-xs font-semibold text-white block truncate">
+                              {tune.name}
+                            </span>
+                            <span className="text-[10px] text-slate-400 block line-clamp-1 mt-0.5">
+                              {tune.description}
+                            </span>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* Browser / Push Notifications */}
               <div className="py-3.5 flex items-center justify-between">
